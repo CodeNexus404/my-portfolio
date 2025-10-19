@@ -4,7 +4,8 @@ This is a full-stack personal portfolio website built with React for the fronten
 
 [Live Demo](https://my-portfolio-live-a274.onrender.com/)
 
-Tech Stack
+
+# Tech Stack
 
 Frontend: React.js, React Router
 
@@ -14,7 +15,8 @@ Styling: CSS
 
 Deployment: Render
 
-Features
+
+# Features
 
 Multi-Page Navigation: Smooth client-side routing between Home, Skills, Projects, Hobbies, and Contact pages using React Router.
 
@@ -24,21 +26,21 @@ Functional Contact Form: A contact form that captures user input (name, email, m
 
 Backend Data Persistence: The Express server receives form submissions, adds a timestamp, and saves them to a messages.json file on the server.
 
-Project Structure
+# Project Structure
 
 The repository is structured as a monorepo with two distinct projects:
 
-my-portfolio/
-│
-├── client/      # React Frontend App
-│   ├── public/
-│   ├── src/
-│   └── package.json
-│
-└── server/      # Node.js/Express Backend Server
-    ├── messages.json
-    ├── server.js
-    └── package.json
+    my-portfolio/
+    │
+    ├── client/      # React Frontend App
+    │   ├── public/
+    │   ├── src/
+    │   └── package.json
+    │
+    └── server/      # Node.js/Express Backend Server
+        ├── messages.json
+        ├── server.js
+        └── package.json
 
 
 Setup and Run Locally
@@ -60,13 +62,13 @@ cd my-portfolio
 Open your first terminal and navigate to the server directory.
 
 # Go to the server folder
-cd server
+    cd server
 
 # Install dependencies
-npm install
+    npm install
 
 # Start the server
-npm start
+    npm start
 
 
 The backend will now be running on http://localhost:5000.
@@ -76,20 +78,20 @@ The backend will now be running on http://localhost:5000.
 Open a second, new terminal and navigate to the client directory.
 
 # Go to the client folder from the root
-cd client
+    cd client
 
 # Install dependencies
-npm install
+    npm install
 
 # Start the React app
-npm start
+    npm start
 
 
 The frontend will open automatically in your browser at http://localhost:3000.
 
 Note: For local testing, ensure the backendUrl variable in client/src/pages/Contact.jsx is set to http://localhost:5000/api/contact.
 
-Deployment
+# Deployment
 
 This project is deployed on Render:
 
