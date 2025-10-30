@@ -37,7 +37,8 @@ const Contact = () => {
     // This is our original backend URL
     // Make sure this is "http://localhost:5000/api/contact" for testing
     // or your live Render URL for deployment.
-    const backendUrl = "https://my-portfolio-2c56.onrender.com/api/contact";
+    // const backendUrl = "http://localhost:5000/api/contact";
+    const backendUrl = "https://my-portfolio-backend-4iq3.onrender.com/api/contact";
     
     try {
       const response = await fetch(backendUrl, {
