@@ -1,102 +1,169 @@
-Personal Portfolio Website
+# Personal Portfolio
 
-This is a full-stack personal portfolio website built with React for the frontend and a Node.js/Express backend to handle contact form submissions. The project is deployed and live on Render.
+A designer-grade, single-page developer portfolio built as a **Vite + React 19 + TypeScript** app with a **Convex** backend (optional for local preview). It features a liquid-glass navbar, an animated shader backdrop, a fully interactive in-page terminal, scroll-reveal animations, and a cohesive "senior developer" type system.
 
-[Live Demo](https://my-portfolio-live-a274.onrender.com/)
+---
 
+## Tech Stack
 
-# Tech Stack
+| Layer        | Choice |
+|--------------|--------|
+| Build tool   | Vite 7 |
+| Language     | TypeScript |
+| UI framework | React 19 |
+| Routing      | React Router v7 (`react-router`) |
+| Styling      | Tailwind CSS v4 + Shadcn UI primitives |
+| Icons        | Lucide React, Simple Icons, Font Awesome (brand logos) |
+| Animation    | Framer Motion, GSAP, Lenis (smooth scroll), @paper-design/shaders-react (WebGL) |
+| 3D / Shaders | Three.js + @react-three/fiber, WebGL gradients |
+| Backend / DB | Convex (serverless) + Convex Auth (email OTP + anonymous) |
+| Forms / PDF  | React Hook Form, Zod, jsPDF / pdf-lib |
 
-Frontend: React.js, React Router
+All source lives under `src/`. Use **Bun** as the package manager (npm also works).
 
-Backend: Node.js, Express.js
+---
 
-Styling: CSS
+## Features
 
-Deployment: Render
+- **Hero** — animated availability badge, rotating status text, responsive headline.
+- **Interactive Terminal** — a real in-page shell (`help`, `ls`, `open`, `projects`, `man`, history with ↑/↓, Tab completion, clickable links). Boots with a loading sequence.
+- **About** — statement with word-reveal, animated stat counters, education timeline.
+- **Skills & Stack** — marquee of technology chips with brand logos (Java, VS Code, etc.) sourced from Font Awesome / Simple Icons.
+- **Experience & Work** — timeline + project cards with WebGL wave-shader headers and LIVE / GITHUB links.
+- **Liquid-glass navbar** — frosted capsule with adaptive text color, scroll-progress bar, ⌘K-style hint.
+- **Contact** — connected info + form card with glass submit button and toast feedback.
+- **Smooth scrolling** — Lenis-driven, tuned for high-refresh displays.
 
+---
 
-# Features
+## Prerequisites
 
-Multi-Page Navigation: Smooth client-side routing between Home, Skills, Projects, Hobbies, and Contact pages using React Router.
+- **Node.js** ≥ 20 (developed on Node 26)
+- **Bun** ≥ 1.0 (recommended) — `npm install -g bun`
+- *(optional)* a **Convex** deployment for the live backend; **not required** for local preview (see Offline mode).
 
-Responsive Design: A clean and modern UI that adapts to different screen sizes.
+---
 
-Functional Contact Form: A contact form that captures user input (name, email, message, etc.).
+## Setup
 
-Backend Data Persistence: The Express server receives form submissions, adds a timestamp, and saves them to a messages.json file on the server.
-
-# Project Structure
-
-The repository is structured as a monorepo with two distinct projects:
-
-    my-portfolio/
-    │
-    ├── client/      # React Frontend App
-    │   ├── public/
-    │   ├── src/
-    │   └── package.json
-    │
-    └── server/      # Node.js/Express Backend Server
-        ├── messages.json
-        ├── server.js
-        └── package.json
-
-
-Setup and Run Locally
-
-To run this project on your local machine, you will need two separate terminals.
-
-Prerequisites
-
-Node.js (which includes npm) installed on your machine.
-
-1. Clone the Repository
-
-git clone [https://github.com/YOUR-USERNAME/YOUR-REPO-NAME.git](https://github.com/YOUR-USERNAME/YOUR-REPO-NAME.git)
+```bash
+# 1. Clone / open the project
 cd my-portfolio
 
+# 2. Install dependencies
+bun install          # or: npm install
+```
 
-2. Run the Backend Server
+That's it — there is **no `requirements.txt`** because this is a Node/Bun project; all dependencies are declared in `package.json` / `package-lock.json`.
 
-Open your first terminal and navigate to the server directory.
+---
 
-# Go to the server folder
-    cd server
+## Running Locally
 
-# Install dependencies
-    npm install
+### Option A — Offline / preview mode (recommended for quick start)
 
-# Start the server
-    npm start
+The app runs **fully offline** with no Convex backend. When `VITE_CONVEX_URL` is unset, Vite aliases the Convex imports to a local in-memory **shim** (`shim/`) backed by `src/data/mock-backend.json`.
 
+```bash
+bun dev              # or: npm run dev
+```
 
-The backend will now be running on http://localhost:5000.
+Open **http://localhost:5173**.
 
-3. Run the Frontend Client
+### Option B — Full Convex backend
 
-Open a second, new terminal and navigate to the client directory.
+1. Create / reuse a Convex deployment and download its `.env.local` (contains `CONVEX_DEPLOYMENT` and `VITE_CONVEX_URL`) into the project root.
+2. Start Convex + the app:
 
-# Go to the client folder from the root
-    cd client
+```bash
+bunx convex dev      # pushes schema + functions, watches for changes
+bun dev              # in a second terminal
+```
 
-# Install dependencies
-    npm install
+With `VITE_CONVEX_URL` present, the app talks to your real deployment instead of the shim.
 
-# Start the React app
-    npm start
+---
 
+## Available Scripts
 
-The frontend will open automatically in your browser at http://localhost:3000.
+| Script            | Description |
+|-------------------|-------------|
+| `bun dev`         | Start the Vite dev server (port 5173). |
+| `bun build`       | Type-check (`tsc -b`) then production build (`vite build`). |
+| `bun preview`     | Preview the production build locally. |
+| `bun lint`        | Run ESLint. |
+| `bun format`      | Format with Prettier. |
+| `bunx convex dev` | Run the Convex backend (dev loop). |
 
-Note: For local testing, ensure the backendUrl variable in client/src/pages/Contact.jsx is set to http://localhost:5000/api/contact.
+---
 
-# Deployment
+## Environment Variables
 
-This project is deployed on Render:
+| Variable            | Used by | Purpose |
+|---------------------|---------|---------|
+| `CONVEX_DEPLOYMENT` | Convex  | Identifies your deployment. |
+| `VITE_CONVEX_URL`   | Client  | When **set**, the app uses the real Convex backend; when **unset**, it falls back to the offline shim. |
+| `JWKS` / `JWT_PRIVATE_KEY` / `SITE_URL` | Convex Auth | Auth signing keys for the backend. |
 
-The client directory is deployed as a Static Site.
+There is no `.env.local` committed; for local preview you don't need any of these.
 
-The server directory is deployed as a Web Service.
+---
 
-The free tier for the Web Service will spin down after 15 minutes of inactivity, so the first contact form submission may take up to a minute to process.
+## Authentication (already wired up)
+
+- Built on **Convex Auth** with **email OTP** + **anonymous** users.
+- **Do not modify** `src/convex/auth/emailOtp.ts`, `src/convex/auth.config.ts`, or `src/convex/auth.ts`.
+- Frontend: use the `useAuth` hook — never read auth state manually.
+
+```ts
+import { useAuth } from "@/hooks/use-auth";
+const { isLoading, isAuthenticated, user, signIn, signOut } = useAuth();
+```
+
+- `/auth` is the sign-in / sign-up page; `/dashboard` is protected by `RequireAuth`.
+- Backend: use `getCurrentUser` from `src/convex/users.ts`.
+
+---
+
+## Conventions (quick reference)
+
+- **Pages** in `src/pages/`, **components** in `src/components/` (UI primitives in `src/components/ui/`).
+- **Mobile responsive** and **light/dark** aware by default; prefer thin borders over shadows.
+- **Animations**: Framer Motion for reveals; GSAP/Lenis for scroll.
+- **Type system**: Inter (body), JetBrains Mono (labels/code), Instrument Serif (editorial display), Nasalization (section numerals), SF Pro Display (stats/headlines). Terminal keeps its own monospace font.
+- **Convex**: schema in `src/convex/schema.ts`; external calls go in `"use node"` actions; reference docs as `Id<"Table">` / `Doc<"Table">`; never add return-type validators.
+
+---
+
+## Project Structure
+
+```
+my-portfolio/
+├── index.html
+├── vite.config.ts          # shim alias logic + chunking
+├── src/
+│   ├── main.tsx             # router + providers + font imports
+│   ├── index.css            # theme tokens, liquid-glass utilities, fonts
+│   ├── pages/               # Landing, Auth, Dashboard, NotFound
+│   ├── components/
+│   │   ├── ui/              # shadcn primitives
+│   │   └── portfolio/       # Hero, Navbar, Terminal, WorkCard, Skills, …
+│   ├── convex/              # schema, auth, functions, _generated
+│   ├── data/portfolio.ts    # all site content (profile, projects, skills)
+│   ├── hooks/               # use-auth, use-github-repos, …
+│   └── lib/utils.ts
+├── shim/                    # offline Convex stand-in (used when no VITE_CONVEX_URL)
+├── public/                  # logo, resume, manifest
+└── convex.json
+```
+
+---
+
+## Build & Deploy
+
+```bash
+bun build                    # outputs to dist/
+bun preview                  # serve the build locally
+```
+
+For production with a live backend, set `VITE_CONVEX_URL` (and the Convex auth env vars) in your host's environment, then build and deploy `dist/`.

@@ -1,0 +1,518 @@
+/* DO NOT CHANGE */
+@import "tailwindcss";
+@import "tw-animate-css";
+
+/* Nasalization — the heading font aarab.me uses for its giant ghost section
+   numerals and uppercase section titles (github.com/aarabii/An). The .otf is
+   served from /public/fonts. */
+@font-face {
+  font-family: "Nasalization";
+  src: url("/fonts/nasalization.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* SF Pro Display — real Apple font copied from ~/Library/Fonts into
+   public/fonts. Now serves genuine SF Pro Display (not the -apple-system
+   fallback) wherever .font-display is used (stats, "Let's build something",
+   B.Tech credential, thoughts.log quote, etc.). */
+@font-face {
+  font-family: "SF Pro Display";
+  src: url("/fonts/SFProDisplay-Regular.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "SF Pro Display";
+  src: url("/fonts/SFProDisplay-Bold.otf") format("opentype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@custom-variant dark (&:is(.dark *));
+
+/* DO NOT CHANGE */
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-card-border: var(--card-border);
+  --color-card-border-hover: var(--card-border-hover);
+  --color-card-hover: var(--card-hover);
+}
+
+/* Custom design tokens (fonts + motion) — Apple-style type scale layered on
+   aarab.me's identity: Inter body, Instrument Serif display, Nasalization
+   (aarab.me's heading font) for section numerals + titles. */
+@theme {
+  --font-sans: "Inter Variable", -apple-system, BlinkMacSystemFont,
+    "SF Pro Text", ui-sans-serif, system-ui, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "JetBrains Mono Variable", ui-monospace, SFMono-Regular, Menlo,
+    Monaco, Consolas, "Liberation Mono", monospace;
+  --font-serif: "Instrument Serif", ui-serif, Georgia, Cambria,
+    "Times New Roman", serif;
+  --font-heading: "Nasalization", "Instrument Serif", ui-serif, Georgia,
+    Cambria, "Times New Roman", serif;
+  --animate-marquee: marquee 42s linear infinite;
+  --animate-marquee-reverse: marquee-reverse 48s linear infinite;
+  --animate-scroll-cue: scroll-cue 2.2s ease-in-out infinite;
+  --animate-grid-pan: grid-pan 60s linear infinite;
+  --animate-cursor-blink: cursor-blink 1.1s steps(1) infinite;
+  --animate-aurora-drift: aurora-drift 22s ease-in-out infinite alternate;
+
+  /* Apple HIG-derived type scale (Inter as SF Pro stand-in) */
+  --text-display-hero: clamp(2.75rem, 7vw, 5rem);
+  --text-display-hero--line-height: 1.05;
+  --text-display-hero--letter-spacing: -0.022em;
+  --text-display-lg: clamp(2rem, 4.5vw, 3rem);
+  --text-display-lg--line-height: 1.1;
+  --text-display-lg--letter-spacing: -0.015em;
+  --text-lead: clamp(1.25rem, 2.2vw, 1.75rem);
+  --text-lead--line-height: 1.35;
+  --text-lead--letter-spacing: -0.01em;
+}
+
+/* THEME — aarab.me base: deep black bg, off-white text, cyan accent.
+   Apple-influenced refinements: hairlines instead of hard borders, quiet
+   surfaces, one accent that carries every interactive element. */
+:root {
+  --radius: 0.75rem;
+  --background: hsl(240 15% 2.5%);
+  --foreground: hsl(220 8% 95%);
+  --card: hsl(240 15% 4%);
+  --card-hover: hsl(240 15% 7.5%);
+  --card-foreground: hsl(220 6% 96%);
+  --popover: hsl(240 20% 3.5%);
+  --popover-foreground: hsl(220 10% 95%);
+  --primary: hsl(220 15% 90%);
+  --primary-foreground: hsl(240 30% 8%);
+  --secondary: hsl(195 60% 35%);
+  --secondary-foreground: hsl(195 10% 95%);
+  --muted: hsl(240 18% 6%);
+  --muted-foreground: hsl(215 15% 65%);
+  --accent: hsl(193 85% 66%);
+  --accent-foreground: hsl(240 30% 6%);
+  --destructive: hsl(0 70% 45%);
+  --border: hsl(240 20% 12%);
+  --card-border: hsl(240 20% 12%);
+  --card-border-hover: hsl(240 20% 22%);
+  --input: hsl(242 25% 4%);
+  --ring: hsl(193 85% 66%);
+  --chart-1: hsl(193 85% 66%);
+  --chart-2: hsl(292.5, 96.3%, 57.5%);
+  --chart-3: hsl(220 15% 88%);
+  --chart-4: hsl(275 60% 45%);
+  --chart-5: hsl(45 40% 35%);
+  --sidebar: hsl(240 20% 3.5%);
+  --sidebar-foreground: hsl(220 10% 95%);
+  --sidebar-primary: hsl(193 85% 66%);
+  --sidebar-primary-foreground: hsl(240 30% 8%);
+  --sidebar-accent: hsl(193 85% 66%);
+  --sidebar-accent-foreground: hsl(240 15% 95%);
+  --sidebar-border: hsl(240 20% 12%);
+  --sidebar-ring: hsl(193 85% 66%);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    /* Native smooth scroll is handled by Lenis (see SmoothScroll.tsx); without
+       it, jumps stay instant — which is also what reduced-motion users get. */
+  }
+  html.lenis,
+  html.lenis body {
+    height: auto;
+  }
+  .lenis.lenis-smooth {
+    scroll-behavior: auto !important;
+  }
+  .lenis.lenis-stopped {
+    overflow: hidden;
+  }
+  /* Butter-smooth compositing: let the browser promote scrolling to the GPU and
+     avoid layout thrash so animations stay at the display's native refresh
+     (e.g. 120Hz). */
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+  }
+  .lenis.lenis-smooth [data-lenis-prevent] {
+    overscroll-behavior: contain;
+  }
+  /* Promote commonly-animated elements to their own layer for 120Hz fluidity.
+     Note: no translateZ(0) on .liquid-glass — forcing a 3D layer can disable
+     backdrop-filter in some engines. Marquee gets will-change for smoothness. */
+  [class*="animate-marquee"] {
+    will-change: transform;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: "Inter Variable", -apple-system, BlinkMacSystemFont,
+      "SF Pro Text", ui-sans-serif, system-ui, "Segoe UI", Roboto, sans-serif;
+    /* Apple body rhythm: 17px-equivalent reading pace with generous leading. */
+    letter-spacing: -0.011em;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+  /* Apple headlines: weight 600 (not 700) with tight negative tracking. */
+  h1,
+  h2,
+  h3 {
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+  button:not([disabled]),
+  [role="button"]:not([disabled]) {
+    cursor: pointer;
+  }
+  ::selection {
+    background: var(--color-accent);
+    color: var(--color-accent-foreground);
+  }
+  /* Apple focus style: 2px solid ring, no offsets. */
+  :focus-visible {
+    outline: 2px solid var(--color-ring);
+    outline-offset: 2px;
+  }
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: color-mix(in oklab, var(--color-foreground) 16%, transparent);
+    border-radius: 999px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: color-mix(in oklab, var(--color-accent) 55%, transparent);
+    background-clip: padding-box;
+    border: 2px solid transparent;
+  }
+  /* Apple system-style active state for all pill buttons & interactive chips. */
+  button:not([disabled]):active,
+  [role="button"]:not([disabled]):active {
+    transform: scale(0.97);
+  }
+}
+
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes marquee-reverse {
+  from {
+    transform: translateX(-50%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes scroll-cue {
+  0%,
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  50% {
+    transform: translateY(9px);
+    opacity: 0.25;
+  }
+}
+
+@keyframes cursor-blink {
+  0%,
+  49% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes aurora-drift {
+  from {
+    transform: translate3d(-4%, -3%, 0) scale(1);
+  }
+  to {
+    transform: translate3d(4%, 3%, 0) scale(1.12);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-marquee,
+  .animate-marquee-reverse,
+  .animate-aurora-drift,
+  .animate-scroll-cue,
+  .animate-grid-pan {
+    animation: none !important;
+  }
+}
+
+/* Outlined display text — footer wordmark: transparent fill with an outline
+   whose stroke width scales with the font size (em-based). The stroke uses
+   the theme's off-white primary and swaps to the cyan accent while its
+   wrapping .group is hovered, echoing the ghost-wordmark interaction. */
+.text-outline {
+  color: transparent;
+  -webkit-text-stroke: 0.018em color-mix(in srgb, var(--color-primary) 62%, transparent);
+  paint-order: stroke;
+}
+.group:hover .text-outline {
+  -webkit-text-stroke-color: var(--color-accent);
+}
+
+/* ── Liquid glass ──────────────────────────────────────────────────────────
+   Reusable frosted-glass surface (same recipe as the experimental navbar):
+   backdrop blur + saturation, translucent gradient fill, hairline light border,
+   inner top specular highlight (::before) and a soft floating shadow. Drop the
+   class on buttons / pills / cards to give them the wet-glass look. Pure CSS so
+   it works on any element without a component wrapper. */
+.liquid-glass {
+  position: relative;
+  border: 1px solid color-mix(in srgb, white 18%, transparent);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.16) 0%,
+    rgba(255, 255, 255, 0.06) 42%,
+    rgba(255, 255, 255, 0.02) 100%
+  );
+  backdrop-filter: blur(12px) saturate(180%);
+  -webkit-backdrop-filter: blur(12px) saturate(180%);
+  box-shadow:
+    0 8px 32px -8px rgba(0, 0, 0, 0.55),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.25);
+}
+.liquid-glass::before {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  height: 1px;
+  background: linear-gradient(
+    to right,
+    transparent,
+    rgba(255, 255, 255, 0.6),
+    transparent
+  );
+  pointer-events: none;
+}
+/* Respect reduced-motion / no-backdrop support: keep a readable fallback. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .liquid-glass {
+    background: rgba(255, 255, 255, 0.08);
+  }
+}
+
+/* "Wet" hover — the glass brightens, lifts slightly and gains a soft accent
+   glow. Shared by the navbar capsule and every liquid-glass button so the
+   interaction feels consistent across the site. */
+.liquid-glass,
+.liquid-glass-accent {
+  transition: backdrop-filter 0.3s ease, box-shadow 0.3s ease,
+    transform 0.3s ease, border-color 0.3s ease;
+}
+.liquid-glass:hover,
+.liquid-glass-accent:hover {
+  backdrop-filter: blur(14px) saturate(200%);
+  -webkit-backdrop-filter: blur(14px) saturate(200%);
+  box-shadow:
+    0 12px 40px -10px rgba(0, 0, 0, 0.6),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.4),
+    0 0 22px -6px color-mix(in srgb, var(--color-accent) 55%, transparent);
+  transform: translateY(-1px);
+}
+
+/* Accent-tinted glass — same frosted recipe but filled with the brand accent
+   instead of white, for primary CTA buttons that must stay on-brand. */
+.liquid-glass-accent {
+  position: relative;
+  border: 1px solid color-mix(in srgb, var(--color-accent) 35%, transparent);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--color-accent) 22%, transparent) 0%,
+    color-mix(in srgb, var(--color-accent) 12%, transparent) 42%,
+    color-mix(in srgb, var(--color-accent) 6%, transparent) 100%
+  );
+  backdrop-filter: blur(12px) saturate(180%);
+  -webkit-backdrop-filter: blur(12px) saturate(180%);
+  box-shadow:
+    0 8px 32px -8px rgba(0, 0, 0, 0.55),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.18);
+  color: var(--color-accent);
+}
+.liquid-glass-accent::before {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  height: 1px;
+  background: linear-gradient(
+    to right,
+    transparent,
+    color-mix(in srgb, var(--color-accent) 70%, white),
+    transparent
+  );
+  pointer-events: none;
+}
+
+/* Lightweight glass for many animated elements (skill chips in a marquee): same
+   frosted look WITHOUT backdrop-filter, so dozens of them animating per frame
+   don't tank the framerate. Static glass (navbar/buttons) keeps real blur. */
+.glass-chip {
+  position: relative;
+  isolation: isolate;
+  border: 1px solid color-mix(in srgb, white 14%, transparent);
+  background: linear-gradient(
+    165deg,
+    rgba(255, 255, 255, 0.14) 0%,
+    rgba(255, 255, 255, 0.05) 42%,
+    rgba(255, 255, 255, 0.02) 100%
+  );
+  box-shadow:
+    0 4px 18px -8px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.25);
+}
+.glass-chip::before {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  height: 35%;
+  border-radius: inherit;
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.4), transparent);
+  opacity: 0.5;
+  pointer-events: none;
+  mix-blend-mode: screen;
+}
+
+/* ── CssBackdrop — lightweight full-screen background (no WebGL) ──────────────
+   Replaces the full-viewport GrainGradient shader. Same cyan "corners" palette on
+   black, but CSS radial gradients that drift slowly via transform — zero GPU
+   context per frame, so the page scrolls smoothly on 120Hz displays. */
+.css-backdrop {
+  isolation: isolate;
+  background: #000;
+}
+.css-backdrop > div {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(60px);
+  opacity: 0.55;
+  mix-blend-mode: screen;
+  will-change: transform;
+}
+.css-backdrop__a {
+  width: 60vw;
+  height: 60vw;
+  top: -18vw;
+  left: -10vw;
+  background: radial-gradient(circle, hsl(193 85% 66%) 0%, transparent 65%);
+  animation: css-backdrop-a 24s ease-in-out infinite;
+}
+.css-backdrop__b {
+  width: 55vw;
+  height: 55vw;
+  top: -12vw;
+  right: -12vw;
+  background: radial-gradient(circle, hsl(196 100% 83%) 0%, transparent 65%);
+  animation: css-backdrop-b 28s ease-in-out infinite;
+  opacity: 0.4;
+}
+.css-backdrop__c {
+  width: 70vw;
+  height: 70vw;
+  bottom: -28vw;
+  left: 20vw;
+  background: radial-gradient(circle, hsl(195 100% 50%) 0%, transparent 60%);
+  animation: css-backdrop-c 32s ease-in-out infinite;
+  opacity: 0.45;
+}
+@keyframes css-backdrop-a {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(6vw, 5vw, 0) scale(1.12); }
+}
+@keyframes css-backdrop-b {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(-5vw, 6vw, 0) scale(1.1); }
+}
+@keyframes css-backdrop-c {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(-4vw, -5vw, 0) scale(1.15); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .css-backdrop > div { animation: none; }
+}
+
+/* ── Cohesive type system ───────────────────────────────────────────────
+   Semantic font utilities built on the families already served by the app:
+   - Inter Variable        → body / UI sans (--font-sans)
+   - JetBrains Mono Var    → code / terminal / labels (--font-mono)
+   - Instrument Serif      → editorial display & quotes (--font-serif)
+   - Nasalization         → section numerals + display titles (--font-heading)
+   - SF Pro Display       → bold product/stat emphasis (--font-display)
+   (SF Pro Display @font-face is declared earlier in this file.)
+   A restrained, deliberate set so the site reads like it was built by a
+   seasoned product engineer rather than a font free-for-all. */
+.font-display {
+  font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI",
+    system-ui, sans-serif;
+}
+.font-editorial {
+  font-family: var(--font-serif);
+}
+.font-code {
+  font-family: var(--font-mono);
+}
+.font-display-title {
+  font-family: var(--font-heading);
+}

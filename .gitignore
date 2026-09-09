@@ -1,0 +1,19 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+dist-ssr/
+*.local
+
+# Env files (keep the example)
+.env
+.env.*
+!.env.example
+
+# Claude Code worktrees (contain a full repo copy + node_modules)
+.claude/
+
+# OS / editor noise
+.DS_Store
+*.log

@@ -1,0 +1,39 @@
+{
+  "currentUser": {
+    "email": "shedgesahil2005@gmail.com",
+    "name": "Sahil Shedge",
+    "isAnonymous": false
+  },
+  "contactMessages": [
+    {
+      "_id": "msg_1",
+      "_creationTime": 1756000000000,
+      "name": "Aarav Sharma",
+      "email": "aarav@example.com",
+      "message": "Hey Sahil — loved your immersive portfolio. How did you build the shader background? Would you be open to a quick call about a freelance gig?",
+      "read": false,
+      "reply": "",
+      "repliedAt": 0
+    },
+    {
+      "_id": "msg_2",
+      "_creationTime": 1756100000000,
+      "name": "Mei Lin",
+      "email": "mei.lin@example.io",
+      "message": "We're hiring a full-stack dev at our startup. Your projects page is exactly the kind of work we need. Can you share your availability?",
+      "read": false,
+      "reply": "",
+      "repliedAt": 0
+    },
+    {
+      "_id": "msg_3",
+      "_creationTime": 1756200000000,
+      "name": "Jordan Patel",
+      "email": "jordan@example.dev",
+      "message": "The terminal component on your landing page is slick. Is it open source? Trying to learn React + Framer Motion myself.",
+      "read": true,
+      "reply": "Thanks Jordan! It's custom but happy to share the approach — shoot me a message on GitHub @CodeNexus404.",
+      "repliedAt": 1756210000000
+    }
+  ]
+}
