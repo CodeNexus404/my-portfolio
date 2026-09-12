@@ -2,6 +2,7 @@ import { AnimatePresence, motion, useInView } from "framer-motion";
 import { GraduationCap, RefreshCw } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { codeQuotes, profile } from "@/data/portfolio";
+import { useSiteContent } from "@/hooks/use-site-content";
 import { cn } from "@/lib/utils";
 import SectionHeader from "./SectionHeader";
 import Spotlight from "./Spotlight";
@@ -26,7 +27,7 @@ function QuoteEngine() {
     <div className="relative flex h-full flex-col justify-between">
       <div className="relative flex items-center justify-between">
         <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-muted-foreground">{"// thoughts.log"}</p>
-        <button type="button" onClick={shuffle} aria-label="Show another quote" className="group inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-white/[0.08] bg-black/40 px-2.5 py-1 font-mono text-[10px] uppercase tracking-wider text-muted-foreground transition-all duration-200 hover:border-accent/40 hover:bg-accent/10 hover:text-accent">
+        <button type="button" onClick={shuffle} aria-label="Show another quote" className="card-static group inline-flex cursor-pointer items-center gap-1.5 rounded-lg border px-2.5 py-1 font-mono text-[10px] uppercase tracking-wider text-muted-foreground transition-all duration-200 hover:border-accent/40 hover:bg-accent/10 hover:text-accent">
           <RefreshCw className="size-3 transition-transform duration-300 group-hover:rotate-180" />
           next
         </button>
@@ -50,6 +51,7 @@ function QuoteEngine() {
 }
 
 export default function About() {
+  const { profile: liveProfile } = useSiteContent();
   const [btech, hsc, ssc] = profile.educationHistory;
 
   return (
@@ -64,18 +66,18 @@ export default function About() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-60px" }}
             transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-            className="rounded-[28px] border border-white/[0.06] bg-black/40 p-6 backdrop-blur-xl sm:p-8"
+            className="card-static rounded-[28px] border p-6 sm:p-8"
           >
             <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-muted-foreground">{"// statement"}</p>
             <div className="mt-6 overflow-hidden">
               <WordReveal
-                text={profile.about[0]}
+                text={liveProfile.about[0]}
                 className="font-display text-2xl leading-snug tracking-tight text-foreground sm:text-3xl"
                 staggerDelay={0.04}
               />
             </div>
             <div className="mt-8 rounded-2xl border border-accent/15 bg-accent/5 p-5">
-              <p className="font-mono text-xs leading-relaxed text-muted-foreground sm:text-sm">{profile.objective}</p>
+              <p className="font-mono text-xs leading-relaxed text-muted-foreground sm:text-sm">{liveProfile.objective}</p>
             </div>
           </motion.div>
         </Spotlight>
@@ -88,13 +90,13 @@ export default function About() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-60px" }}
               transition={{ duration: 0.6, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-              className="flex h-full flex-col rounded-[28px] border border-white/[0.06] bg-black/40 p-6 backdrop-blur-xl sm:p-8"
+              className="card-static flex h-full flex-col rounded-[28px] border p-6 sm:p-8"
             >
               <span className="inline-flex size-11 items-center justify-center rounded-xl border border-accent/20 bg-accent/10 text-accent"><GraduationCap className="size-5" /></span>
               <h3 className="mt-5 font-display text-xl font-semibold leading-snug tracking-tight text-foreground">{btech.credential}</h3>
               <p className="mt-2 font-mono text-xs leading-relaxed text-muted-foreground">{btech.school}</p>
               <p className="mt-2 w-fit inline-flex items-center gap-2 rounded-full border border-accent/25 bg-accent/10 px-3 py-1 font-mono text-[11px] text-accent">{btech.score}</p>
-              <div className="mt-6 space-y-4 border-t border-white/[0.06] pt-5">
+              <div className="mt-6 space-y-4 border-t border-border pt-5">
                 {[hsc, ssc].map((edu) => (
                   <div key={edu.school}>
                     <p className="font-mono text-xs font-medium leading-relaxed text-foreground/85">{edu.school}</p>
@@ -114,7 +116,7 @@ export default function About() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-60px" }}
                 transition={{ duration: 0.6, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
-                className="rounded-[28px] border border-white/[0.06] bg-black/40 p-6 backdrop-blur-xl sm:p-8"
+                className="card-static rounded-[28px] border p-6 sm:p-8"
               >
                 <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
                   {profile.stats.map((stat) => (
@@ -134,7 +136,7 @@ export default function About() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-60px" }}
                 transition={{ duration: 0.6, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
-                className="rounded-[28px] border border-white/[0.06] bg-black/40 p-6 backdrop-blur-xl sm:p-8"
+                className="card-static rounded-[28px] border p-6 sm:p-8"
               >
                 <QuoteEngine />
               </motion.div>

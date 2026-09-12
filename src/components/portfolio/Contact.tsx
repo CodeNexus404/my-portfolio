@@ -45,7 +45,7 @@ export default function Contact() {
 
         {/* Unified card — info side and form share one connected container
             with a divider between them (instead of two separate cards). */}
-        <div className="mt-12 flex flex-col overflow-hidden rounded-3xl border border-white/[0.06] bg-black/40 backdrop-blur-xl md:flex-row">
+        <div className="card-static mt-12 flex flex-col overflow-hidden rounded-3xl border md:flex-row">
           {/* Info side */}
           <motion.div
             initial={{ opacity: 0, y: 24 }}
@@ -76,7 +76,7 @@ export default function Contact() {
                   href={social.href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center rounded-full border border-white/[0.08] bg-black/40 px-4 py-1.5 font-mono text-[11px] text-muted-foreground backdrop-blur-xl transition-all duration-200 hover:border-accent/40 hover:bg-accent/10 hover:text-accent"
+                  className="card-static inline-flex items-center rounded-full border px-4 py-1.5 font-mono text-[11px] text-muted-foreground transition-all duration-200 hover:border-accent/40 hover:bg-accent/10 hover:text-accent"
                 >
                   {social.label}
                 </a>
@@ -88,7 +88,7 @@ export default function Contact() {
           </motion.div>
 
           {/* Divider between the two connected halves (vertical on desktop) */}
-          <div className="border-t border-white/[0.06] md:border-t-0 md:border-l md:w-px md:bg-white/[0.06]" aria-hidden />
+          <div className="border-border border-t md:border-l md:w-px" aria-hidden />
 
           {/* Form side */}
           <Spotlight className="md:w-1/2">
@@ -98,7 +98,7 @@ export default function Contact() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-60px" }}
               transition={{ duration: 0.6, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-              className="flex h-full flex-col gap-4 rounded-2xl border border-white/[0.06] bg-black/90 p-6 backdrop-blur-xl sm:rounded-3xl sm:p-8"
+              className="card-static flex h-full flex-col gap-4 rounded-2xl border p-6 sm:rounded-3xl sm:p-8"
             >
               {submitted ? (
                 <div className="flex flex-col items-center justify-center gap-3 py-12 text-center">
@@ -125,7 +125,7 @@ export default function Contact() {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     required
-                    className="rounded-xl border border-white/20 bg-black/80 px-4 py-3 font-mono text-sm text-foreground shadow-[0_0_0_1px_rgba(255,255,255,0.04)] ring-1 ring-white/5 placeholder:text-muted-foreground/60 outline-none transition-colors focus:border-accent/50 focus:ring-accent/20 focus:bg-black/90"
+                    className="rounded-xl border border-border bg-card px-4 py-3 font-mono text-sm text-foreground placeholder:text-muted-foreground/60 outline-none transition-colors focus:border-accent/50 focus:ring-2 focus:ring-accent/20"
                   />
                   <input
                     type="email"
@@ -133,7 +133,7 @@ export default function Contact() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
-                    className="rounded-xl border border-white/20 bg-black/80 px-4 py-3 font-mono text-sm text-foreground shadow-[0_0_0_1px_rgba(255,255,255,0.04)] ring-1 ring-white/5 placeholder:text-muted-foreground/60 outline-none transition-colors focus:border-accent/50 focus:ring-accent/20 focus:bg-black/90"
+                    className="rounded-xl border border-border bg-card px-4 py-3 font-mono text-sm text-foreground placeholder:text-muted-foreground/60 outline-none transition-colors focus:border-accent/50 focus:ring-2 focus:ring-accent/20"
                   />
                   <textarea
                     placeholder="Message"
@@ -141,7 +141,7 @@ export default function Contact() {
                     onChange={(e) => setMessage(e.target.value)}
                     required
                     rows={5}
-                    className="resize-none rounded-xl border border-white/20 bg-black/80 px-4 py-3 font-mono text-sm text-foreground shadow-[0_0_0_1px_rgba(255,255,255,0.04)] ring-1 ring-white/5 placeholder:text-muted-foreground/60 outline-none transition-colors focus:border-accent/50 focus:ring-accent/20 focus:bg-black/90"
+                    className="resize-none rounded-xl border border-border bg-card px-4 py-3 font-mono text-sm text-foreground placeholder:text-muted-foreground/60 outline-none transition-colors focus:border-accent/50 focus:ring-2 focus:ring-accent/20"
                   />
                   <button
                     type="submit"

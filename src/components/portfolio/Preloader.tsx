@@ -41,7 +41,7 @@ export default function Preloader({ onComplete }: PreloaderProps) {
 
   return (
     <motion.div
-      className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-[#050a14] overflow-hidden"
+      className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-background dark:bg-[#050a14] overflow-hidden"
       initial={{ opacity: 1 }}
       animate={phase === "exit" ? { opacity: 0 } : { opacity: 1 }}
       transition={{ duration: 0.8, ease: [0.45, 0, 0.15, 1] }}

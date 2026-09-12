@@ -32,7 +32,7 @@
   font-display: swap;
 }
 
-@custom-variant dark (&:is(.dark *));
+@custom-variant dark (&:is(.theme-dark *));
 
 /* DO NOT CHANGE */
 @theme inline {
@@ -109,9 +109,95 @@
 
 /* THEME — aarab.me base: deep black bg, off-white text, cyan accent.
    Apple-influenced refinements: hairlines instead of hard borders, quiet
-   surfaces, one accent that carries every interactive element. */
+   surfaces, one accent that carries every interactive element.
+
+   Theme is SCOPED, not html-global: each top-level area (public site, dashboard)
+   wraps itself in a ThemeScope that applies `.theme-light` or `.theme-dark` to a
+   container. Tailwind's `dark:` variant keys off `.theme-dark` ancestors so each
+   area's dark mode is fully independent. `:root` holds the light default;
+   `.theme-light` / `.theme-dark` override tokens for their subtree. */
 :root {
   --radius: 0.75rem;
+  color-scheme: light;
+  /* Light surfaces */
+  --background: hsl(220 30% 97%);
+  --foreground: hsl(222 30% 12%);
+  --card: hsl(0 0% 100%);
+  --card-hover: hsl(220 25% 96%);
+  --card-foreground: hsl(222 30% 14%);
+  --popover: hsl(0 0% 100%);
+  --popover-foreground: hsl(222 30% 12%);
+  --primary: hsl(222 35% 18%);
+  --primary-foreground: hsl(0 0% 100%);
+  --secondary: hsl(193 70% 38%);
+  --secondary-foreground: hsl(0 0% 100%);
+  --muted: hsl(220 20% 94%);
+  --muted-foreground: hsl(220 12% 40%);
+  --accent: hsl(193 85% 38%);
+  --accent-foreground: hsl(0 0% 100%);
+  --destructive: hsl(0 72% 45%);
+  --border: hsl(220 18% 86%);
+  --card-border: hsl(220 18% 86%);
+  --card-border-hover: hsl(220 16% 72%);
+  --input: hsl(220 20% 92%);
+  --ring: hsl(193 85% 45%);
+  --chart-1: hsl(193 85% 45%);
+  --chart-2: hsl(292.5, 80% 50%);
+  --chart-3: hsl(222 30% 30%);
+  --chart-4: hsl(275 55% 50%);
+  --chart-5: hsl(45 80% 45%);
+  --sidebar: hsl(0 0% 100%);
+  --sidebar-foreground: hsl(222 30% 12%);
+  --sidebar-primary: hsl(193 85% 38%);
+  --sidebar-primary-foreground: hsl(0 0% 100%);
+  --sidebar-accent: hsl(193 85% 38%);
+  --sidebar-accent-foreground: hsl(0 0% 100%);
+  --sidebar-border: hsl(220 18% 86%);
+  --sidebar-ring: hsl(193 85% 45%);
+}
+
+/* Explicit light tokens — lets a `.theme-light` container force light even when
+   nested inside a dark ancestor (and gives the dashboard its own light mode). */
+.theme-light {
+  color-scheme: light;
+  --background: hsl(220 30% 97%);
+  --foreground: hsl(222 30% 12%);
+  --card: hsl(0 0% 100%);
+  --card-hover: hsl(220 25% 96%);
+  --card-foreground: hsl(222 30% 14%);
+  --popover: hsl(0 0% 100%);
+  --popover-foreground: hsl(222 30% 12%);
+  --primary: hsl(222 35% 18%);
+  --primary-foreground: hsl(0 0% 100%);
+  --secondary: hsl(193 70% 38%);
+  --secondary-foreground: hsl(0 0% 100%);
+  --muted: hsl(220 20% 94%);
+  --muted-foreground: hsl(220 12% 40%);
+  --accent: hsl(193 85% 38%);
+  --accent-foreground: hsl(0 0% 100%);
+  --destructive: hsl(0 72% 45%);
+  --border: hsl(220 18% 86%);
+  --card-border: hsl(220 18% 86%);
+  --card-border-hover: hsl(220 16% 72%);
+  --input: hsl(220 20% 92%);
+  --ring: hsl(193 85% 45%);
+  --chart-1: hsl(193 85% 45%);
+  --chart-2: hsl(292.5, 80% 50%);
+  --chart-3: hsl(222 30% 30%);
+  --chart-4: hsl(275 55% 50%);
+  --chart-5: hsl(45 80% 45%);
+  --sidebar: hsl(0 0% 100%);
+  --sidebar-foreground: hsl(222 30% 12%);
+  --sidebar-primary: hsl(193 85% 38%);
+  --sidebar-primary-foreground: hsl(0 0% 100%);
+  --sidebar-accent: hsl(193 85% 38%);
+  --sidebar-accent-foreground: hsl(0 0% 100%);
+  --sidebar-border: hsl(220 18% 86%);
+  --sidebar-ring: hsl(193 85% 45%);
+}
+
+.theme-dark {
+  color-scheme: dark;
   --background: hsl(240 15% 2.5%);
   --foreground: hsl(220 8% 95%);
   --card: hsl(240 15% 4%);
@@ -128,10 +214,10 @@
   --accent: hsl(193 85% 66%);
   --accent-foreground: hsl(240 30% 6%);
   --destructive: hsl(0 70% 45%);
-  --border: hsl(240 20% 12%);
-  --card-border: hsl(240 20% 12%);
-  --card-border-hover: hsl(240 20% 22%);
-  --input: hsl(242 25% 4%);
+  --border: hsl(240 16% 20%);
+  --card-border: hsl(240 16% 20%);
+  --card-border-hover: hsl(240 14% 32%);
+  --input: hsl(240 14% 18%);
   --ring: hsl(193 85% 66%);
   --chart-1: hsl(193 85% 66%);
   --chart-2: hsl(292.5, 96.3%, 57.5%);
@@ -304,72 +390,222 @@
    wrapping .group is hovered, echoing the ghost-wordmark interaction. */
 .text-outline {
   color: transparent;
-  -webkit-text-stroke: 0.018em color-mix(in srgb, var(--color-primary) 62%, transparent);
+  -webkit-text-stroke: 0.018em color-mix(in srgb, var(--foreground) 55%, transparent);
   paint-order: stroke;
 }
 .group:hover .text-outline {
-  -webkit-text-stroke-color: var(--color-accent);
+  -webkit-text-stroke-color: var(--accent);
 }
 
 /* ── Liquid glass ──────────────────────────────────────────────────────────
-   Reusable frosted-glass surface (same recipe as the experimental navbar):
-   backdrop blur + saturation, translucent gradient fill, hairline light border,
-   inner top specular highlight (::before) and a soft floating shadow. Drop the
-   class on buttons / pills / cards to give them the wet-glass look. Pure CSS so
-   it works on any element without a component wrapper. */
+   Clear "liquid glass" in the iOS 26 / 27 style. The signature read is built
+   from layers that mimic real refraction, in order:
+
+     1. backdrop-filter blur + saturation + a touch of brightness  → the glass
+        distorts and lifts whatever sits behind it (the animated shader, text).
+     2. a NEARLY TRANSPARENT fill (the "clear" part of clear glass) — only a
+        faint vertical tint, brighter at the crown, so you still read the
+        backdrop through it like polished glass, not frosted plastic.
+     3. a luminous REFRACTIVE RIM (::after) — a gradient ring that is bright on
+        the top/left (the light source) and dim on the bottom/right, with a faint
+        chromatic split (R on one edge, B on the other) so the edge looks bent.
+     4. a specular GLINT (::before) along the top — the wet highlight.
+     5. inner shadows: a 1px top inset that catches light + a 1px bottom inset
+        for depth, plus a soft floating drop shadow.
+     6. a faint conic chromatic sheen for the rainbow bend at grazing angles.
+
+   All colors are token-driven (color-mix vs --foreground / --background) so the
+   same recipe reads correctly in light AND dark. Pure CSS — drop on any element.
+  */
 .liquid-glass {
   position: relative;
-  border: 1px solid color-mix(in srgb, white 18%, transparent);
+  isolation: isolate;
+  /* Always-readable text: theme foreground (light on dark, ink on light) against
+     the clear fill, so CTAs like "View Resume" never render black-on-dark. */
+  color: var(--foreground);
+  /* Barely-there base border; the luminous rim (::after) does the real work. */
+  border: 1px solid color-mix(in srgb, var(--foreground) 12%, transparent);
+  /* Clear glass: mostly the backdrop shows through, faint bright crown tint. */
   background: linear-gradient(
     180deg,
-    rgba(255, 255, 255, 0.16) 0%,
-    rgba(255, 255, 255, 0.06) 42%,
-    rgba(255, 255, 255, 0.02) 100%
+    color-mix(in srgb, var(--foreground) 14%, transparent) 0%,
+    color-mix(in srgb, var(--background) 30%, transparent) 38%,
+    color-mix(in srgb, var(--background) 22%, transparent) 100%
   );
-  backdrop-filter: blur(12px) saturate(180%);
-  -webkit-backdrop-filter: blur(12px) saturate(180%);
+  backdrop-filter: blur(20px) saturate(180%) brightness(1.08);
+  -webkit-backdrop-filter: blur(20px) saturate(180%) brightness(1.08);
   box-shadow:
-    0 8px 32px -8px rgba(0, 0, 0, 0.55),
-    inset 0 1px 0 0 rgba(255, 255, 255, 0.25);
+    0 10px 40px -12px rgba(0, 0, 0, 0.35),
+    0 1px 2px rgba(0, 0, 0, 0.18),
+    inset 0 1px 0 0 color-mix(in srgb, var(--foreground) 45%, transparent),
+    inset 0 -1px 1px 0 rgba(0, 0, 0, 0.1);
 }
+/* Specular glint — the bright wet highlight across the crown of the glass. */
 .liquid-glass::before {
   content: "";
   position: absolute;
   inset-inline: 0;
   top: 0;
-  height: 1px;
+  height: 55%;
+  border-radius: inherit;
   background: linear-gradient(
-    to right,
-    transparent,
-    rgba(255, 255, 255, 0.6),
-    transparent
+    to bottom,
+    color-mix(in srgb, var(--foreground) 30%, transparent) 0%,
+    transparent 100%
   );
+  opacity: 0.55;
   pointer-events: none;
+  z-index: 1;
 }
-/* Respect reduced-motion / no-backdrop support: keep a readable fallback. */
+/* Refractive rim — a luminous gradient ring (light top/left, dim bottom/right)
+   with a faint chromatic split so the edge bends like real glass. */
+.liquid-glass::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1.2px;
+  background: linear-gradient(
+    145deg,
+    color-mix(in srgb, var(--foreground) 85%, rgb(255 120 120) 8%) 0%,
+    color-mix(in srgb, var(--foreground) 30%, transparent) 26%,
+    transparent 54%,
+    color-mix(in srgb, var(--foreground) 22%, transparent) 74%,
+    color-mix(in srgb, var(--foreground) 70%, rgb(120 160 255) 10%) 100%
+  );
+  /* Mask so only the thin ring shows, not a filled rect. */
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  z-index: 2;
+  opacity: 0.85;
+}
+/* Keep child content above the glint. */
+.liquid-glass > * {
+  position: relative;
+  z-index: 3;
+}
+/* Navbar capsule — tuned clear-glass that borrows the cyan of the shader behind
+   it (so the bar reads as the same material as the backdrop) and is a touch less
+   blurry than the base .liquid-glass for crisper labels. Keeps the refractive rim
+   + top glint. Theming: in dark it tints toward the accent; in light it stays a
+   soft cool-tinted clear glass. */
+.navbar-glass {
+  /* Neutral CLEAR glass — picks up whatever is behind it (the shader / sections)
+     instead of imposing a tint. No blue/cyan: it is a pure refractive clear pane.
+     --nav-intensity (0..1, nudged by the navbar on scroll) controls how much of
+     the neutral "frost" fill shows, so it visibly adapts as you scroll. */
+  --nav-fill: color-mix(in srgb, var(--background) calc(36% + var(--nav-intensity, 0) * 18%) , transparent);
+  backdrop-filter: blur(14px) saturate(150%) brightness(1.04);
+  -webkit-backdrop-filter: blur(14px) saturate(150%) brightness(1.04);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--nav-fill) 95%, transparent) 0%,
+    color-mix(in srgb, var(--background) 18%, transparent) 46%,
+    color-mix(in srgb, var(--background) 12%, transparent) 100%
+  );
+  border: 1px solid color-mix(in srgb, var(--foreground) 18%, transparent);
+  box-shadow:
+    0 10px 36px -12px rgba(0, 0, 0, 0.28),
+    0 1px 2px rgba(0, 0, 0, 0.14),
+    inset 0 1px 0 0 color-mix(in srgb, var(--foreground) 42%, transparent),
+    inset 0 -1px 1px 0 rgba(0, 0, 0, 0.1);
+}
+/* Neutral refractive rim — brighter top/left, no accent color. */
+.navbar-glass::after {
+  background: linear-gradient(
+    145deg,
+    color-mix(in srgb, var(--foreground) 55%, transparent) 0%,
+    color-mix(in srgb, var(--foreground) 20%, transparent) 26%,
+    transparent 54%,
+    color-mix(in srgb, var(--foreground) 16%, transparent) 74%,
+    color-mix(in srgb, var(--foreground) 40%, transparent) 100%
+  );
+  opacity: 0.85;
+}
+/* Respect reduced-motion / no-backdrop: readable neutral fallback. */
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .liquid-glass {
-    background: rgba(255, 255, 255, 0.08);
+  .navbar-glass {
+    background: color-mix(in srgb, var(--background) 80%, var(--foreground) 6%);
   }
 }
 
-/* "Wet" hover — the glass brightens, lifts slightly and gains a soft accent
+/* ── Theme-aware glass surface ────────────────────────────────────────────────
+   Clear-glass card (portfolio sections, replacing the old hardcoded
+   `bg-black/40 border-white/[0.06]`). Shares the iOS clear-glass recipe so it
+   stays legible and its edges are visible in BOTH light and dark mode. Use with
+   rounded-* utilities. */
+.surface {
+  position: relative;
+  isolation: isolate;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--card) 50%, var(--foreground) 10%) 0%,
+    color-mix(in srgb, var(--card) 40%, transparent) 50%,
+    color-mix(in srgb, var(--card) 34%, transparent) 100%
+  );
+  border: 1px solid color-mix(in srgb, var(--foreground) 14%, transparent);
+  backdrop-filter: blur(22px) saturate(165%) brightness(1.05);
+  -webkit-backdrop-filter: blur(22px) saturate(165%) brightness(1.05);
+  box-shadow:
+    0 12px 38px -14px rgba(0, 0, 0, 0.32),
+    inset 0 1px 0 0 color-mix(in srgb, var(--foreground) 38%, transparent);
+}
+.surface::before {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  height: 50%;
+  border-radius: inherit;
+  background: linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--foreground) 22%, transparent) 0%,
+    transparent 100%
+  );
+  opacity: 0.5;
+  pointer-events: none;
+  z-index: 1;
+}
+.surface > * {
+  position: relative;
+  z-index: 2;
+}
+
+/* ── Static card ───────────────────────────────────────────────────────────
+   A plain, non-glass card surface used by the About / Experience / Contact
+   sections. Solid fill (theme --card) with a hairline border — no gradient,
+   no backdrop blur, no refraction — so it reads as a clean black/white panel in
+   both light and dark rather than a frosted iOS card. */
+.card-static {
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+}
+
+/* "Wet" hover — the glass lifts, sharpens its refraction and gains a soft accent
    glow. Shared by the navbar capsule and every liquid-glass button so the
-   interaction feels consistent across the site. */
+   interaction feels consistent across the site. Springs via cubic-bezier. */
 .liquid-glass,
 .liquid-glass-accent {
-  transition: backdrop-filter 0.3s ease, box-shadow 0.3s ease,
-    transform 0.3s ease, border-color 0.3s ease;
+  transition: backdrop-filter 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.35s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.35s ease;
 }
 .liquid-glass:hover,
 .liquid-glass-accent:hover {
-  backdrop-filter: blur(14px) saturate(200%);
-  -webkit-backdrop-filter: blur(14px) saturate(200%);
+  backdrop-filter: blur(20px) saturate(220%);
+  -webkit-backdrop-filter: blur(20px) saturate(220%);
   box-shadow:
-    0 12px 40px -10px rgba(0, 0, 0, 0.6),
-    inset 0 1px 0 0 rgba(255, 255, 255, 0.4),
-    0 0 22px -6px color-mix(in srgb, var(--color-accent) 55%, transparent);
-  transform: translateY(-1px);
+    0 16px 44px -12px rgba(0, 0, 0, 0.6),
+    0 2px 6px rgba(0, 0, 0, 0.25),
+    inset 0 1px 0 0 color-mix(in srgb, var(--foreground) 40%, transparent),
+    inset 0 -1px 1px 0 rgba(0, 0, 0, 0.14),
+    0 0 26px -6px color-mix(in srgb, var(--color-accent) 60%, transparent);
+  transform: translateY(-2px);
 }
 
 /* Accent-tinted glass — same frosted recipe but filled with the brand accent
@@ -411,16 +647,18 @@
 .glass-chip {
   position: relative;
   isolation: isolate;
-  border: 1px solid color-mix(in srgb, white 14%, transparent);
+  /* Theme-aware border/fill: faint white on dark, faint ink on light, so the
+     chip stays visible in BOTH modes (no invisible white-on-white). */
+  border: 1px solid color-mix(in srgb, var(--foreground) 18%, transparent);
   background: linear-gradient(
     165deg,
-    rgba(255, 255, 255, 0.14) 0%,
-    rgba(255, 255, 255, 0.05) 42%,
-    rgba(255, 255, 255, 0.02) 100%
+    color-mix(in srgb, var(--background) 60%, var(--foreground) 14%) 0%,
+    color-mix(in srgb, var(--background) 78%, var(--foreground) 6%) 42%,
+    color-mix(in srgb, var(--background) 70%, var(--foreground) 3%) 100%
   );
   box-shadow:
-    0 4px 18px -8px rgba(0, 0, 0, 0.5),
-    inset 0 1px 0 0 rgba(255, 255, 255, 0.25);
+    0 4px 18px -8px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 0 color-mix(in srgb, var(--foreground) 25%, transparent);
 }
 .glass-chip::before {
   content: "";
@@ -429,10 +667,13 @@
   top: 0;
   height: 35%;
   border-radius: inherit;
-  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.4), transparent);
+  background: linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--foreground) 28%, transparent),
+    transparent
+  );
   opacity: 0.5;
   pointer-events: none;
-  mix-blend-mode: screen;
 }
 
 /* ── CssBackdrop — lightweight full-screen background (no WebGL) ──────────────
@@ -515,4 +756,42 @@
 }
 .font-display-title {
   font-family: var(--font-heading);
+}
+
+/* ── Blurred-glass toast notifications ───────────────────────────────────────
+   The Sonner <Toaster /> (className "toaster group") renders each toast as a
+   [data-sonner-toast] element. The frosted surface itself is applied via the
+   Tailwind classNames in src/components/ui/sonner.tsx (backdrop-blur-2xl +
+   hairline border + floating shadow) so it matches the site's liquid-glass
+   language. Here we only add the specular top highlight and a no-backdrop
+   fallback; everything else is handled by the component's classNames. */
+.toaster [data-sonner-toast] {
+  position: relative;
+}
+/* Specular top highlight, consistent with .liquid-glass. */
+.toaster [data-sonner-toast]::before {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  height: 1px;
+  background: linear-gradient(
+    to right,
+    transparent,
+    rgba(255, 255, 255, 0.55),
+    transparent
+  );
+  pointer-events: none;
+}
+.toaster [data-sonner-toast] [data-title] {
+  color: var(--popover-foreground);
+  font-weight: 600;
+}
+.toaster [data-sonner-toast] [data-description] {
+  color: color-mix(in srgb, var(--popover-foreground) 70%, transparent);
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .toaster [data-sonner-toast] {
+    background: rgba(20, 22, 28, 0.92) !important;
+  }
 }

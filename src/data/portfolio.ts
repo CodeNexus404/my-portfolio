@@ -79,6 +79,28 @@ export type Project = {
     live?: string;
     github?: string;
   };
+  /** Optional per-card shader gradient (3 colors). Falls back to default palette. */
+  shaderColors?: string[];
+  /** Optional per-card shader numeric params (mirrors <GrainGradient />). */
+  shaderParams?: {
+    softness: number;
+    intensity: number;
+    noise: number;
+    speed: number;
+    scale: number;
+    rotation: number;
+    offsetX: number;
+    offsetY: number;
+    shape: string;
+  };
+  /** Header render mode: "shader" (default), "image", or "custom" (HTML/CSS/React). */
+  shaderMode?: "shader" | "image" | "custom";
+  /** Custom header source type when shaderMode === "custom": "html" or "react". */
+  customType?: "html" | "react";
+  /** Custom header source (HTML/CSS or React JSX) when shaderMode === "custom". */
+  customCss?: string;
+  /** Signed URL for the uploaded header image (shaderMode === "image"). */
+  headerImageUrl?: string | null;
 };
 
 export const selectedWorks: Project[] = [

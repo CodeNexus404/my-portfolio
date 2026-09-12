@@ -4,10 +4,9 @@ import { getAuthUserId } from "@convex-dev/auth/server";
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import { action } from "./_generated/server";
+import { ownerEmail } from "./guards";
 
-const OWNER_EMAIL = (
-  process.env.OWNER_EMAIL ?? "shedgesahil2005@gmail.com"
-).toLowerCase();
+const OWNER_EMAIL = ownerEmail();
 
 /**
  * Reply to a contact message — owner only.

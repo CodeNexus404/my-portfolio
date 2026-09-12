@@ -16,6 +16,33 @@ export const roleValidator = v.union(
 );
 export type Role = Infer<typeof roleValidator>;
 
+// ── Reusable GrainGradient shader-param validators ─────────────────────────────
+// Mirrors the props accepted by @paper-design/shaders-react <GrainGradient />:
+// softness, intensity, noise, speed, scale, rotation, offsetX, offsetY, shape.
+// Colors are stored separately (shaderColors for cards, `colors` for the global
+// background) because they're arrays of hex strings, not single numbers.
+export const shaderShapeValidator = v.union(
+  v.literal("wave"),
+  v.literal("dots"),
+  v.literal("truchet"),
+  v.literal("corners"),
+  v.literal("ripple"),
+  v.literal("blob"),
+  v.literal("sphere"),
+);
+
+export const shaderParamsValidator = v.object({
+  softness: v.number(),
+  intensity: v.number(),
+  noise: v.number(),
+  speed: v.number(),
+  scale: v.number(),
+  rotation: v.number(),
+  offsetX: v.number(),
+  offsetY: v.number(),
+  shape: shaderShapeValidator,
+});
+
 const schema = defineSchema(
   {
     // default auth tables using convex auth.
@@ -40,6 +67,101 @@ const schema = defineSchema(
       read: v.boolean(),
       reply: v.optional(v.string()),
       repliedAt: v.optional(v.number()),
+    }),
+
+    // Editable site content (owner CMS). Singleton — at most one row.
+    siteContent: defineTable({
+      hero: v.object({
+        constant: v.string(),
+        rotating: v.array(v.string()),
+      }),
+      availability: v.string(),
+      about: v.array(v.string()),
+      objective: v.string(),
+      socials: v.array(
+        v.object({ label: v.string(), href: v.string() }),
+      ),
+      resumeStorageId: v.optional(v.id("_storage")),
+      // Interactive-terminal content: boot text, prompt label, and the
+      // quick-action chips. Each boot line carries a `type` so the terminal
+      // can color it (system / loading / accent / output / input / header /
+      // error / link) exactly like the original static BOOT_LINES.
+      terminal: v.optional(
+        v.object({
+          prompt: v.string(),
+          bootLines: v.array(
+            v.object({ type: v.string(), text: v.string() }),
+          ),
+          defaultCommands: v.array(v.string()),
+          // Editable description/response shown when a chip/command is run.
+          commandDescriptions: v.optional(v.record(v.string(), v.string())),
+        }),
+      ),
+      // Global background shader (the site's animated backdrop). `mode` switches
+      // between the live GrainGradient shader and a static uploaded image. Colors
+      // + numeric params mirror <GrainGradient /> so the dashboard can edit them.
+      background: v.optional(
+        v.object({
+          mode: v.union(v.literal("shader"), v.literal("image"), v.literal("custom")),
+          colorBack: v.string(),
+          colors: v.array(v.string()),
+          softness: v.number(),
+          intensity: v.number(),
+          noise: v.number(),
+          speed: v.number(),
+          scale: v.number(),
+          rotation: v.number(),
+          offsetX: v.number(),
+          offsetY: v.number(),
+          shape: shaderShapeValidator,
+          imageStorageId: v.optional(v.id("_storage")),
+          customType: v.optional(v.union(v.literal("html"), v.literal("react"))),
+          customCss: v.optional(v.string()),
+        }),
+      ),
+    }),
+
+    // Work projects — ordered via `order`.
+    projects: defineTable({
+      name: v.string(),
+      description: v.string(),
+      technologies: v.array(v.string()),
+      liveUrl: v.optional(v.string()),
+      githubUrl: v.optional(v.string()),
+      order: v.number(),
+      // Per-card shader gradient (3 hex colors). Null → default palette by index.
+      shaderColors: v.optional(v.array(v.string())),
+      // Per-card shader numeric params (mirrors <GrainGradient />). Null → defaults.
+      shaderParams: v.optional(shaderParamsValidator),
+      // Header render mode: "shader" (default WebGL), "image" (uploaded), "custom" (HTML/CSS/React).
+      shaderMode: v.optional(v.union(v.literal("shader"), v.literal("image"), v.literal("custom"))),
+      // Custom header source type when shaderMode === "custom": "html" (HTML/CSS) or "react" (JSX).
+      customType: v.optional(v.union(v.literal("html"), v.literal("react"))),
+      // Custom header source (HTML/CSS or React JSX) when shaderMode === "custom".
+      customCss: v.optional(v.string()),
+      // Uploaded header image storage id (shaderMode === "image").
+      imageStorageId: v.optional(v.id("_storage")),
+    }).index("by_order", ["order"]),
+
+    // Experience timeline entries (owner-editable from the dashboard). Ordered via `order`.
+    experiences: defineTable({
+      role: v.string(),
+      company: v.string(),
+      companySite: v.optional(v.string()),
+      startDate: v.string(),
+      endDate: v.optional(v.string()),
+      current: v.optional(v.boolean()),
+      description: v.array(v.string()),
+      technologies: v.array(v.string()),
+      order: v.number(),
+    }).index("by_order", ["order"]),
+
+    // Skills & Stack — grouped chips that scroll in the marquee. Owner-editable.
+    skills: defineTable({
+      groups: v.array(
+        v.object({ label: v.string(), items: v.array(v.string()) }),
+      ),
+      note: v.string(),
     }),
 
     // add other tables here

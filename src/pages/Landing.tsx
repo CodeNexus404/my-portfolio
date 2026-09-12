@@ -12,6 +12,9 @@ import Projects from "@/components/portfolio/Projects";
 import Contact from "@/components/portfolio/Contact";
 import Footer from "@/components/portfolio/Footer";
 import CommandPalette from "@/components/portfolio/CommandPalette";
+import { SiteContentProvider, useSiteContent } from "@/hooks/use-site-content";
+import { ThemeScopeProvider } from "@/theme/theme";
+import { Toaster } from "@/components/ui/sonner";
 
 // The shader bundle never blocks the hero — it mounts right after first paint.
 const AnimatedBackdrop = lazy(
@@ -22,7 +25,9 @@ export default function Landing() {
   const [loading, setLoading] = useState(true);
 
   return (
-    <div className="min-h-screen flex flex-col relative">
+    <SiteContentProvider>
+      <ThemeScopeProvider storageKey="portfolio-public-theme" defaultTheme="dark">
+      <div className="min-h-screen flex flex-col relative">
       {/* Entrance preloader */}
       <AnimatePresence>
         {loading ? <Preloader onComplete={() => setLoading(false)} /> : null}
@@ -31,12 +36,12 @@ export default function Landing() {
       {/* Desktop trailing cursor */}
       <Cursor />
 
-      {/* Fixed shader background — exact aarab.me GrainGradient
-          (github.com/aarabii/An → components/mics/bg/GradientBg.tsx).
-          Painted at z-0, NOT -z-50: a negative z-index would drop it behind
-          the page's opaque background and the shader would be invisible. */}
+      {/* Fixed background — the live GrainGradient shader, a static uploaded image,
+          or a custom HTML/CSS/React layer (all chosen in the dashboard). Painted
+          at z-0 so it sits behind the content but stays visible. AnimatedBackdrop
+          renders the correct mode itself. */}
       <div
-        className="fixed inset-0 z-0 h-full w-full overflow-hidden pointer-events-none bg-black"
+        className="fixed inset-0 z-0 h-full w-full overflow-hidden pointer-events-none bg-background"
         aria-hidden
       >
         <Suspense fallback={null}>
@@ -55,7 +60,7 @@ export default function Landing() {
               fixed shader (aarab.me pattern): a single backdrop-blur wrapper
               instead of per-section filters, so the blur is complete and
               seamless from the Marquee all the way through Contact */}
-          <div className="relative rounded-t-[2.5rem] border-t border-white/10 bg-black/30 backdrop-blur-2xl backdrop-saturate-150">
+          <div className="relative rounded-t-[2.5rem] border-t border-border bg-background/70 backdrop-blur-2xl backdrop-saturate-150">
             <Marquee />
             <About />
             <Skills />
@@ -67,6 +72,9 @@ export default function Landing() {
 
         <Footer />
       </div>
-    </div>
+      </div>
+      <Toaster />
+    </ThemeScopeProvider>
+    </SiteContentProvider>
   );
 }

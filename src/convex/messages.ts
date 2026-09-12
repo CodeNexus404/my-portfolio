@@ -1,57 +1,19 @@
-import { getAuthUserId } from "@convex-dev/auth/server";
 import { v } from "convex/values";
+import { internalMutation, internalQuery, mutation, query } from "./_generated/server";
 import {
-  internalMutation,
-  internalQuery,
-  mutation,
-  query,
-  type QueryCtx,
-} from "./_generated/server";
+  getCurrentUser,
+  isOwner,
+  requireOwner,
+  ownerEmail,
+} from "./guards";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /**
- * The ONLY account allowed to read/reply to contact messages.
- * Set OWNER_EMAIL in the Convex environment (or the Keys/API keys UI) to your
- * real address; it falls back to the portfolio email. Anonymous/guest accounts
- * are always rejected.
- */
-const OWNER_EMAIL = (
-  process.env.OWNER_EMAIL ?? "shedgesahil2005@gmail.com"
-).toLowerCase();
-
-type OwnerUser = { email?: string; isAnonymous?: boolean };
-
-/** Load the signed-in user record, or null when signed out. */
-async function getCurrentUser(ctx: QueryCtx): Promise<OwnerUser | null> {
-  const userId = await getAuthUserId(ctx);
-  if (userId === null) return null;
-  const user = await ctx.db.get(userId);
-  if (!user) return null;
-  return { email: user.email ?? undefined, isAnonymous: user.isAnonymous };
-}
-
-function isOwner(user: OwnerUser | null) {
-  return (
-    !!user &&
-    user.isAnonymous !== true &&
-    !!user.email &&
-    user.email.toLowerCase() === OWNER_EMAIL
-  );
-}
-
-/** Throw unless the caller is the portfolio owner. */
-async function requireOwner(ctx: QueryCtx) {
-  const user = await getCurrentUser(ctx);
-  if (!isOwner(user)) {
-    throw new Error(
-      "Not authorized. Sign in with the owner account (email OTP, no guest sign-in).",
-    );
-  }
-  return user;
-}
-
-/**
+ * Contact inbox helpers. Owner authorization is centralized in ./guards.ts
+ * (OWNER_EMAIL env var with the portfolio-email fallback). The email check in
+ * sendReply.ts compares against the same owner email via guards.ownerEmail().
+ *
  * Store a contact-form submission. Public on purpose — visitors send this
  * without an account. Inputs are trimmed and length-capped server-side.
  */

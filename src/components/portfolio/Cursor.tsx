@@ -21,7 +21,7 @@ export default function Cursor() {
 
   return (
     <motion.div
-      className="pointer-events-none fixed left-0 top-0 z-50 size-8 rounded-full border border-white/50 bg-white/5 hidden lg:block"
+      className="pointer-events-none fixed left-0 top-0 z-50 size-8 rounded-full border border-foreground/40 bg-foreground/5 hidden lg:block"
       style={{ x: cursorXSpring, y: cursorYSpring }}
     />
   );

@@ -30,9 +30,55 @@ type User = {
   isAnonymous: boolean;
 } | null;
 
+type TerminalContent = {
+  prompt: string;
+  bootLines: { type: string; text: string }[];
+  defaultCommands: string[];
+};
+
+type SiteContent = {
+  hero: { constant: string; rotating: string[] };
+  availability: string;
+  about: string[];
+  objective: string;
+  socials: { label: string; href: string }[];
+  resumeUrl: string;
+  terminal: TerminalContent;
+};
+
+type Project = {
+  _id: string;
+  name: string;
+  description: string;
+  technologies: string[];
+  liveUrl: string;
+  githubUrl: string;
+  order: number;
+  shaderColors?: string[];
+};
+
 type State = {
   currentUser: User;
   messages: Message[];
+  siteContent: SiteContent;
+  projects: Project[];
+  resumeStorageId: string | null;
+  background: {
+    mode: "shader" | "image";
+    colorBack: string;
+    colors: string[];
+    softness: number;
+    intensity: number;
+    noise: number;
+    speed: number;
+    scale: number;
+    rotation: number;
+    offsetX: number;
+    offsetY: number;
+    shape: string;
+    imageStorageId?: string;
+  };
+  backgroundImageUrl: string | null;
 };
 
 // ── Reactive store ──────────────────────────────────────────────────────────
@@ -41,6 +87,31 @@ type State = {
 const state: State = {
   currentUser: (seed.currentUser as User) ?? null,
   messages: (seed.contactMessages as Message[]).map((m) => ({ ...m })),
+  siteContent: (seed.siteContent as SiteContent) ?? {
+    hero: { constant: "Stay", rotating: [] },
+    availability: "Open to internships & full-time roles",
+    about: [""],
+    objective: "",
+    socials: [],
+    resumeUrl: "/resume.pdf",
+  },
+  projects: (seed.projects as Project[]).map((p) => ({ ...p })),
+  resumeStorageId: null,
+  background: {
+    mode: "shader",
+    colorBack: "#000000",
+    colors: ["#00d8a8", "#00ffd4", "#00b4ff"],
+    softness: 0.5,
+    intensity: 0.3,
+    noise: 0,
+    speed: 1,
+    scale: 1,
+    rotation: 0,
+    offsetX: 0,
+    offsetY: 0,
+    shape: "corners",
+  },
+  backgroundImageUrl: null,
 };
 
 const subscribers = new Set<() => void>();
@@ -74,6 +145,36 @@ function runQuery(name: string): unknown {
     case "messages:listMessages":
       // Frontend expects `Doc<"contactMessages">[] | null`.
       return state.messages;
+    case "content:getEditable": {
+      // Frontend treats `null` as "unseeded"; seed JSON is always present here.
+      const ordered = [...state.projects].sort((a, b) => a.order - b.order);
+      return {
+        content: {
+          ...state.siteContent,
+          terminal: state.siteContent.terminal ?? {
+            prompt: "sahil@portfolio:~$",
+            bootLines: [],
+            defaultCommands: ["help", "whoami", "projects", "skills", "socials", "clear"],
+          },
+          resumeUrl: state.resumeStorageId
+            ? `/resume-shim-${state.resumeStorageId}.pdf`
+            : state.siteContent.resumeUrl,
+        },
+        projects: ordered.map((p) => ({
+          id: p._id,
+          name: p.name,
+          description: p.description,
+          technologies: p.technologies,
+          liveUrl: p.liveUrl || undefined,
+          githubUrl: p.githubUrl || undefined,
+          order: p.order,
+          shaderColors: p.shaderColors,
+          shaderParams: p.shaderParams,
+        })),
+        background: state.background,
+        backgroundImageUrl: state.backgroundImageUrl,
+      };
+    }
     default:
       return undefined;
   }
@@ -127,6 +228,165 @@ function runMutation(name: string, args: Record<string, unknown>): unknown {
         emailError:
           "RESEND_API_KEY is not set — reply saved locally but not emailed. (Convex backend removed.)",
       };
+    }
+
+    // ── Owner CMS (content) ───────────────────────────────────────────────
+    case "content:updateHero": {
+      state.siteContent.hero = {
+        constant: String(args.constant ?? ""),
+        rotating: Array.isArray(args.rotating) ? (args.rotating as string[]) : [],
+      };
+      notify();
+      return null;
+    }
+    case "content:updateAvailability": {
+      state.siteContent.availability = String(args.availability ?? "");
+      notify();
+      return null;
+    }
+    case "content:updateTerminal": {
+      state.siteContent.terminal = {
+        prompt: String(args.prompt ?? "sahil@portfolio:~$"),
+        bootLines: Array.isArray(args.bootLines)
+          ? (args.bootLines as { type: string; text: string }[]).map((l) => ({
+              type: String(l.type ?? "output"),
+              text: String(l.text ?? ""),
+            }))
+          : [],
+        defaultCommands: Array.isArray(args.defaultCommands)
+          ? (args.defaultCommands as string[]).map((c) => String(c))
+          : [],
+      };
+      notify();
+      return null;
+    }
+    case "content:updateBackground": {
+      state.background = {
+        mode: args.background?.mode === "image" ? "image" : "shader",
+        colorBack: String(args.background?.colorBack ?? "#000000"),
+        colors: Array.isArray(args.background?.colors)
+          ? (args.background?.colors as string[]).map((c) => String(c))
+          : ["#00d8a8", "#00ffd4", "#00b4ff"],
+        softness: Number(args.background?.softness ?? 0.5),
+        intensity: Number(args.background?.intensity ?? 0.3),
+        noise: Number(args.background?.noise ?? 0),
+        speed: Number(args.background?.speed ?? 1),
+        scale: Number(args.background?.scale ?? 1),
+        rotation: Number(args.background?.rotation ?? 0),
+        offsetX: Number(args.background?.offsetX ?? 0),
+        offsetY: Number(args.background?.offsetY ?? 0),
+        shape: String(args.background?.shape ?? "corners"),
+        ...(args.background?.imageStorageId
+          ? { imageStorageId: String(args.background.imageStorageId) }
+          : {}),
+      };
+      notify();
+      return null;
+    }
+    case "content:setBackgroundImage": {
+      const storageId = String(args.storageId ?? "");
+      state.background = {
+        ...state.background,
+        mode: "image",
+        imageStorageId: storageId,
+      };
+      // Mirrors the real backend: a shim placeholder URL is surfaced via
+      // backgroundImageUrl so the preview can render the chosen image slot.
+      state.backgroundImageUrl = `/background-shim-${storageId}.png`;
+      notify();
+      return null;
+    }
+    case "content:updateAboutObjective": {
+      state.siteContent.about = Array.isArray(args.about)
+        ? (args.about as string[])
+        : [];
+      state.siteContent.objective = String(args.objective ?? "");
+      notify();
+      return null;
+    }
+    case "content:updateSocials": {
+      state.siteContent.socials = Array.isArray(args.socials)
+        ? (args.socials as { label: string; href: string }[])
+        : [];
+      notify();
+      return null;
+    }
+    case "content:upsertProject": {
+      const technologies = Array.isArray(args.technologies)
+        ? (args.technologies as string[])
+        : [];
+      const liveUrl = args.liveUrl ? String(args.liveUrl) : "";
+      const githubUrl = args.githubUrl ? String(args.githubUrl) : "";
+      const shaderColors = Array.isArray(args.shaderColors)
+        ? (args.shaderColors as string[])
+        : undefined;
+      const id = args.id ? String(args.id) : `proj_${Date.now()}`;
+      const existing = state.projects.find((p) => p._id === id);
+      if (existing) {
+        existing.name = String(args.name ?? existing.name);
+        existing.description = String(args.description ?? existing.description);
+        existing.technologies = technologies;
+        existing.liveUrl = liveUrl;
+        existing.githubUrl = githubUrl;
+        if (shaderColors) existing.shaderColors = shaderColors;
+      } else {
+        const maxOrder = state.projects.reduce(
+          (m, p) => Math.max(m, p.order),
+          0,
+        );
+        state.projects.push({
+          _id: id,
+          name: String(args.name ?? "Untitled"),
+          description: String(args.description ?? ""),
+          technologies,
+          liveUrl,
+          githubUrl,
+          order: maxOrder + 1,
+          ...(shaderColors ? { shaderColors } : {}),
+        });
+      }
+      notify();
+      return id;
+    }
+    case "content:deleteProject": {
+      state.projects = state.projects.filter((p) => p._id !== args.id);
+      notify();
+      return null;
+    }
+    case "content:reorderProject": {
+      const dir = String(args.direction);
+      const ordered = [...state.projects].sort((a, b) => a.order - b.order);
+      const idx = ordered.findIndex((p) => p._id === args.id);
+      if (idx !== -1) {
+        const swap = dir === "up" ? idx - 1 : idx + 1;
+        if (swap >= 0 && swap < ordered.length) {
+          const a = ordered[idx];
+          const b = ordered[swap];
+          const tmp = a.order;
+          a.order = b.order;
+          b.order = tmp;
+          notify();
+        }
+      }
+      return null;
+    }
+    case "content:createUploadUrl": {
+      // No real backend — return a fake upload endpoint.
+      return `https://shim.local/upload/${Date.now()}`;
+    }
+    case "content:setResume": {
+      // Record the fake storage id; getEditable will surface a placeholder URL.
+      state.resumeStorageId = String(args.storageId ?? `s_${Date.now()}`);
+      notify();
+      return null;
+    }
+    case "content:resetResume": {
+      state.resumeStorageId = null;
+      notify();
+      return null;
+    }
+    case "content:seedDefaults": {
+      return null;
     }
     default:
       return null;

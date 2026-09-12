@@ -9,6 +9,9 @@ import {
   type ReactNode,
 } from "react";
 import { GrainGradient } from "@paper-design/shaders-react";
+import { LiveProvider, LivePreview, LiveError } from "react-live";
+import { useScopedTheme } from "@/theme/theme";
+import { useSiteContent } from "@/hooks/use-site-content";
 
 /**
  * Fixed full-screen background — an exact copy of aarab.me's background
@@ -28,27 +31,72 @@ import { GrainGradient } from "@paper-design/shaders-react";
 const Shader = lazy(() => import("./GrainGradientShader"));
 
 function GrainGradientShader() {
+  const { background } = useSiteContent();
+  const { theme } = useScopedTheme();
+  const isDark = theme !== "light";
+
+  // When the dashboard has switched the background to a static uploaded image,
+  // don't mount the WebGL shader at all — the parent renders the image instead.
+  if (background.mode === "image") return null;
+
+  // The base color must flip with the theme: black in dark mode, a cool light
+  // grey in light mode — otherwise dark ink text (Hero name, navbar) becomes
+  // invisible against a black shader. The owner's custom colorBack only applies
+  // in dark mode; light mode always uses a readable light base.
+  const colorBack = isDark
+    ? background.colorBack || "hsl(0, 0%, 0%)"
+    : "#e6ecf2";
+
   return (
     <div className="absolute inset-0 h-full w-full">
       <GrainGradient
         style={{ height: "100%", width: "100%" }}
-        colorBack="hsl(0, 0%, 0%)"
-        softness={0.5}
-        intensity={0.3}
-        noise={0}
-        shape="corners"
-        offsetX={0}
-        offsetY={0}
-        scale={1}
-        rotation={0}
-        speed={1}
-        colors={[
-          "hsl(193, 85%, 66%)",
-          "hsl(196, 100%, 83%)",
-          "hsl(195, 100%, 50%)",
-        ]}
+        colorBack={colorBack}
+        softness={background.softness}
+        intensity={background.intensity}
+        noise={background.noise}
+        shape={background.shape as never}
+        offsetX={background.offsetX}
+        offsetY={background.offsetY}
+        scale={background.scale}
+        rotation={background.rotation}
+        speed={background.speed}
+        colors={background.colors}
       />
     </div>
+  );
+}
+
+/**
+ * Owner-authored custom background: HTML/CSS (sandboxed iframe) or React JSX
+ * (compiled live via react-live). Renders full-screen behind the content. A bad
+ * React snippet won't crash the page — the ShaderErrorBoundary below catches it
+ * and falls back to the canvas gradient.
+ */
+function BackgroundCustomLayer() {
+  const { background } = useSiteContent();
+  const source = background.customCss ?? "";
+
+  if (background.customType === "react") {
+    return (
+      <div className="absolute inset-0 h-full w-full">
+        <LiveProvider code={source} noInline={false}>
+          <LivePreview />
+          <LiveError className="hidden" />
+        </LiveProvider>
+      </div>
+    );
+  }
+
+  const doc = `<!doctype html><html><head><meta charset="utf-8"><style>html,body{margin:0;height:100%;overflow:hidden;background:transparent;}*{box-sizing:border-box;}</style></head><body>${source}</body></html>`;
+  return (
+    <iframe
+      title="Custom background"
+      srcDoc={doc}
+      sandbox=""
+      className="absolute inset-0 h-full w-full border-0 bg-transparent"
+      aria-hidden
+    />
   );
 }
 
@@ -66,6 +114,27 @@ export default function AnimatedBackdrop() {
     document.addEventListener("visibilitychange", onVisibility);
     return () => document.removeEventListener("visibilitychange", onVisibility);
   }, []);
+
+  const { background, backgroundImageUrl } = useSiteContent();
+
+  // Custom + image modes are static (no rAF), so render them regardless of visibility.
+  if (background.mode === "custom" && background.customCss) {
+    return (
+      <ShaderErrorBoundary fallback={<CanvasFallback />}>
+        <BackgroundCustomLayer />
+      </ShaderErrorBoundary>
+    );
+  }
+  if (background.mode === "image" && backgroundImageUrl) {
+    return (
+      <img
+        src={backgroundImageUrl}
+        alt=""
+        className="absolute inset-0 h-full w-full object-cover"
+        aria-hidden
+      />
+    );
+  }
 
   return (
     <ShaderErrorBoundary fallback={<CanvasFallback />}>

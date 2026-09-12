@@ -2,6 +2,7 @@ import { motion, useScroll, useTransform } from "framer-motion";
 import { ArrowUpRight, Clock3, MapPin } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { profile } from "@/data/portfolio";
+import { useSiteContent } from "@/hooks/use-site-content";
 import Magnetic from "./Magnetic";
 import RotatingText from "./RotatingText";
 import InteractiveTerminal from "./InteractiveTerminal";
@@ -37,6 +38,7 @@ function LocalClock() {
  * Apple pill grammar (one filled ghost pill + one text link).
  */
 export default function Hero() {
+  const { profile: liveProfile } = useSiteContent();
   const sectionRef = useRef<HTMLElement>(null);
   const { scrollYProgress } = useScroll({
     target: sectionRef,
@@ -61,13 +63,13 @@ export default function Hero() {
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.05, ease: [0.16, 1, 0.3, 1] }}
-          className="inline-flex items-center gap-2.5 rounded-full border border-white/[0.08] bg-black/40 px-4 py-1.5 text-[12px] text-muted-foreground backdrop-blur-xl"
+          className="card-static inline-flex items-center gap-2.5 rounded-full border px-4 py-1.5 text-[12px] text-muted-foreground"
         >
           <span className="relative flex size-2">
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
             <span className="relative inline-flex size-2 rounded-full bg-emerald-400" />
           </span>
-          {profile.availability}
+          {liveProfile.availability}
         </motion.div>
 
         {/* Location + Role */}
@@ -133,7 +135,7 @@ export default function Hero() {
           </Magnetic>
           <Magnetic strength={0.2}>
             <a
-              href={profile.resumeHref}
+              href={liveProfile.resumeHref}
               target="_blank"
               rel="noopener noreferrer"
               className="liquid-glass group inline-flex items-center gap-1.5 rounded-full px-5 py-2.5 text-[15px] active:scale-95"
@@ -162,8 +164,8 @@ export default function Hero() {
         className="absolute bottom-8 right-5 z-20 hidden md:bottom-12 md:right-12 lg:block"
       >
         <RotatingText
-          constant={profile.hero.constant}
-          words={profile.hero.rotating}
+          constant={liveProfile.hero.constant}
+          words={liveProfile.hero.rotating}
         />
       </motion.div>
 

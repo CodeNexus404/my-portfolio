@@ -14,6 +14,12 @@ dist-ssr/
 # Claude Code worktrees (contain a full repo copy + node_modules)
 .claude/
 
+# Private notes (kept local, never published)
+NOTES.md
+
+# Never track a bun lockfile — this project uses npm.
+bun.lock
+
 # OS / editor noise
 .DS_Store
 *.log

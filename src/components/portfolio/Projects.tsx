@@ -1,11 +1,12 @@
 import { motion } from "framer-motion";
 import { ArrowUpRight } from "lucide-react";
-import { profile, selectedWorks } from "@/data/portfolio";
+import { useSiteContent } from "@/hooks/use-site-content";
 import SectionHeader from "./SectionHeader";
 import WorkCard from "./WorkCard";
 
 export default function Projects() {
-  const githubHref = profile.socials.find((s) => s.label === "GitHub")?.href;
+  const { profile: liveProfile, projects } = useSiteContent();
+  const githubHref = liveProfile.socials.find((s) => s.label === "GitHub")?.href;
   return (
     <section id="work" className="relative scroll-mt-24 px-6 py-28 sm:py-36">
       <div className="mx-auto max-w-5xl">
@@ -19,7 +20,7 @@ export default function Projects() {
           ) : null}
         </div>
         <div className="grid grid-cols-1 gap-8 sm:gap-10 md:grid-cols-2">
-          {selectedWorks.map((project, index) => (<WorkCard key={project.id} project={project} index={index} />))}
+          {projects.map((project, index) => (<WorkCard key={project.id} project={project} index={index} />))}
         </div>
       </div>
     </section>

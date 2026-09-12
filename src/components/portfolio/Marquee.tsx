@@ -30,7 +30,7 @@ function MarqueeTrack() {
 
 export default function Marquee() {
   return (
-    <div className="relative overflow-hidden border-y border-white/[0.06] py-4">
+    <div className="relative overflow-hidden border-y border-border py-4">
       <div className="flex">
         <div className="animate-marquee"><MarqueeTrack /></div>
         <div className="animate-marquee" aria-hidden><MarqueeTrack /></div>

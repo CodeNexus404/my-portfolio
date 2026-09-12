@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { Github, Linkedin, Mail, Twitter } from "lucide-react";
 import { profile } from "@/data/portfolio";
+import { useSiteContent } from "@/hooks/use-site-content";
 
 function SocialIcon({ label }: { label: string }) {
   if (label === "GitHub") return <Github className="size-4" />;
@@ -13,6 +14,7 @@ function SocialIcon({ label }: { label: string }) {
 }
 
 export default function Footer() {
+  const { profile: liveProfile } = useSiteContent();
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -23,7 +25,7 @@ export default function Footer() {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-60px" }}
       transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-      className="w-full bg-black/80 backdrop-blur-2xl text-foreground pt-8 pb-8 px-4 sm:px-8 md:px-12 border-t border-border/40"
+      className="w-full bg-card/80 backdrop-blur-2xl text-foreground pt-8 pb-8 px-4 sm:px-8 md:px-12 border-t border-border/60"
     >
       <div className="max-w-7xl mx-auto flex flex-col">
         {/* Top Section Grid */}
@@ -44,7 +46,7 @@ export default function Footer() {
           <div className="order-2 md:order-2 w-full md:w-1/3 flex flex-col justify-start">
             <p className="font-mono text-xs font-semibold uppercase tracking-wider text-primary/80 mb-4">Social</p>
             <div className="flex flex-col gap-2">
-              {profile.socials.map((social) => (
+              {liveProfile.socials.map((social) => (
                 <a key={social.label} href={social.href} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 font-mono text-xs text-muted-foreground hover:text-foreground transition-colors">
                   <SocialIcon label={social.label} />
                   {social.label}

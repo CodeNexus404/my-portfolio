@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { profile, selectedWorks, skills, experience, codeQuotes } from "@/data/portfolio";
+import { useSiteContent } from "@/hooks/use-site-content";
+import { useScopedTheme } from "@/theme/theme";
 import { cn } from "@/lib/utils";
 
 type TerminalLine = {
@@ -9,10 +11,10 @@ type TerminalLine = {
   text: string;
 };
 
-const PROMPT = `sahil@portfolio:~$`;
+const FALLBACK_PROMPT = `sahil@portfolio:~$`;
 
-/** Idle message shown while the terminal "boots" — the requested loading text. */
-const BOOT_LINES: TerminalLine[] = [
+/** Static fallback boot lines — used until the owner edits them in the dashboard. */
+const FALLBACK_BOOT_LINES: TerminalLine[] = [
   { type: "system", text: `sahil@portfolio:~$ whoami` },
   { type: "accent", text: `${profile.name} — ${profile.role}` },
   { type: "system", text: "loading shell environment…" },
@@ -24,6 +26,8 @@ const BOOT_LINES: TerminalLine[] = [
   { type: "system", text: "tip: try 'ls projects', 'man about' or 'open github'." },
   { type: "output", text: "" },
 ];
+
+const FALLBACK_COMMANDS = ["help", "whoami", "projects", "skills", "socials", "clear"];
 
 type ManEntry = { usage: string; desc: string };
 
@@ -59,6 +63,10 @@ const COMMANDS: Record<string, ManEntry> = {
   ascii: { usage: "ascii", desc: "ASCII art" },
   echo: { usage: "echo <msg>", desc: "Print a message" },
   sudo: { usage: "sudo <anything>", desc: "Elevate privileges (spoiler: you can't)" },
+  theme: { usage: "theme [light|dark]", desc: "Toggle or set the site color theme" },
+  say: { usage: "say <msg>", desc: "Echo a message with an accent highlight" },
+  coffee: { usage: "coffee", desc: "Take a well-deserved break ☕" },
+  fortune: { usage: "fortune", desc: "A random slice of developer wisdom" },
   clear: { usage: "clear", desc: "Clear the terminal" },
 };
 
@@ -225,6 +233,20 @@ function linkify(text: string): React.ReactNode {
 }
 
 export default function InteractiveTerminal({ className }: { className?: string }) {
+  const { terminal } = useSiteContent();
+  const { theme, toggle: toggleTheme } = useScopedTheme();
+  // Live, owner-edited terminal content — falls back to the static defaults
+  // until the owner edits them in the dashboard's Terminal tab. Re-read on every
+  // render so a dashboard edit that reaches this client (hot reload / re-query)
+  // shows up without a full page refresh.
+  const livePrompt = terminal.prompt || FALLBACK_PROMPT;
+  const BOOT_LINES: TerminalLine[] =
+    terminal.bootLines.length > 0
+      ? terminal.bootLines.map((l) => ({ type: l.type as TerminalLine["type"], text: l.text }))
+      : FALLBACK_BOOT_LINES;
+  const QUICK_COMMANDS =
+    terminal.defaultCommands.length > 0 ? terminal.defaultCommands : FALLBACK_COMMANDS;
+
   const [lines, setLines] = useState<TerminalLine[]>([]);
   const [booting, setBooting] = useState(true);
   const [input, setInput] = useState("");
@@ -298,8 +320,14 @@ export default function InteractiveTerminal({ className }: { className?: string 
     const trimmed = raw.trim();
     if (!trimmed) return;
     const [command, ...args] = trimmed.toLowerCase().split(/\s+/);
-    const echoed: TerminalLine = { type: "input", text: `${PROMPT} ${trimmed}` };
+    const echoed: TerminalLine = { type: "input", text: `${livePrompt} ${trimmed}` };
     const canonical = ALIASES[command] ?? command;
+
+    // Dashboard-managed description for this command — shown as a highlighted line
+    // before the command's own output, so each chip can carry an editable blurb.
+    const descMap = terminal.commandDescriptions ?? {};
+    const descKey = command in descMap ? command : canonical in descMap ? canonical : null;
+    const desc = descKey ? descMap[descKey] : undefined;
 
     if (canonical === "clear") {
       setLines([]);
@@ -827,6 +855,48 @@ export default function InteractiveTerminal({ className }: { className?: string 
         out = [{ type: "output", text: args.join(" ") }];
         break;
 
+      case "theme": {
+        const want = args[0]?.toLowerCase();
+        if (want === "light" || want === "dark") {
+          if ((want === "dark") !== (theme !== "light")) {
+            // already in the requested mode — no toggle needed
+          } else {
+            toggleTheme();
+          }
+          out = [
+            { type: "system", text: `theme set to ${want}.` },
+          ];
+        } else {
+          toggleTheme();
+          out = [
+            { type: "system", text: `theme toggled → ${theme === "dark" ? "light" : "dark"}` },
+          ];
+        }
+        break;
+      }
+
+      case "say":
+        out = [{ type: "accent", text: args.join(" ") || "…" }];
+        break;
+
+      case "coffee":
+        out = [
+          { type: "accent", text: "　 ( ( ( ☕ ) ) )" },
+          { type: "output", text: "" },
+          { type: "system", text: "brewing… done. take a break, you've earned it." },
+          { type: "output", text: "☕☕☕　rest, then ship." },
+        ];
+        break;
+
+      case "fortune":
+        out = [
+          { type: "output", text: "" },
+          { type: "header", text: `"${codeQuotes[Math.floor(Math.random() * codeQuotes.length)]}"` },
+          { type: "output", text: "" },
+          { type: "system", text: "— fortune cookie" },
+        ];
+        break;
+
       case "sudo":
         out = [
           { type: "error", text: "sahil is not in the sudoers file. This incident will be reported." },
@@ -838,6 +908,11 @@ export default function InteractiveTerminal({ className }: { className?: string 
         out = [
           { type: "error", text: `command not found: ${command} — try 'help'` },
         ];
+    }
+
+    // Prepend the dashboard-managed description (if any) as a highlighted line.
+    if (desc) {
+      out = [{ type: "accent", text: desc }, { type: "output", text: "" }, ...out];
     }
 
     push(echoed, out, trimmed);
@@ -885,7 +960,7 @@ export default function InteractiveTerminal({ className }: { className?: string 
         else if (matches.length > 1) {
           setLines((prev) => [
             ...prev,
-            { type: "input", text: `${PROMPT} ${input}` },
+            { type: "input", text: `${livePrompt} ${input}` },
             { type: "system", text: `${matches.join("  ")}` },
           ]);
         }
@@ -898,7 +973,7 @@ export default function InteractiveTerminal({ className }: { className?: string 
       else if (matches.length > 1) {
         setLines((prev) => [
           ...prev,
-          { type: "input", text: `${PROMPT} ${input}` },
+          { type: "input", text: `${livePrompt} ${input}` },
           { type: "system", text: `${matches.join("  ")}` },
         ]);
       }
@@ -984,7 +1059,7 @@ export default function InteractiveTerminal({ className }: { className?: string 
         {!booting && (
           <>
             <form onSubmit={handleSubmit} className="flex items-center gap-0">
-              <span className="shrink-0 font-semibold text-accent">{PROMPT}&nbsp;</span>
+              <span className="shrink-0 font-semibold text-accent">{livePrompt}&nbsp;</span>
               <input
                 ref={inputRef}
                 type="text"
@@ -1007,7 +1082,7 @@ export default function InteractiveTerminal({ className }: { className?: string 
 
             {/* Quick-action chips — clickable shortcuts to common commands */}
             <div className="mt-3 flex flex-wrap gap-2">
-              {["help", "whoami", "projects", "skills", "socials", "clear"].map((cmd) => (
+              {QUICK_COMMANDS.map((cmd) => (
                 <button
                   key={cmd}
                   type="button"

@@ -3,9 +3,11 @@
 import { Component, Suspense, lazy, type ReactNode } from "react";
 import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
+import { LiveProvider, LivePreview, LiveError } from "react-live";
 import { cn } from "@/lib/utils";
 import type { Project } from "@/data/portfolio";
 import TechBadge from "./TechBadge";
+import { useScopedTheme } from "@/theme/theme";
 
 // The genuine WebGL wave shader (same flowing gradient animation you liked).
 // lazy() so the canvas code never blocks first paint.
@@ -19,6 +21,12 @@ interface WorkCardProps {
 export default function WorkCard({ project, index, className }: WorkCardProps) {
   const number = String(index + 1).padStart(3, "0");
   const shaderRef = useRef<HTMLDivElement>(null);
+  const { theme } = useScopedTheme();
+  const isDark = theme !== "light";
+  // Per-card shader gradient + numeric params — both fall back to the defaults
+  // (palette by index, default wave params) when not customized in the dashboard.
+  const shaderColors = project.shaderColors;
+  const shaderParams = project.shaderParams;
   // Only mount the WebGL shader while the card header is on/near screen. Offscreen
   // cards show the static gradient fallback — so you keep the real flowing shader
   // animation without 4 always-on GPU contexts fighting for frames while scrolling.
@@ -35,17 +43,44 @@ export default function WorkCard({ project, index, className }: WorkCardProps) {
         className,
       )}
     >
-      {/* Shader header — the "folder contents" showing above the tab */}
+      {/* Header — the "folder contents" showing above the tab. Renders in one of
+          three owner-configurable modes: the live WebGL shader (default), a custom
+          uploaded image, or raw HTML/CSS. The real shader is always mounted (no
+          static gradient fallback) so the header stays animated. */}
       <div className="relative h-36 w-full shrink-0 overflow-hidden sm:h-44">
         <div ref={shaderRef} className="pointer-events-none absolute inset-0 overflow-hidden">
-          {shaderInView ? (
-            <ShaderErrorBoundary fallback={<WaveShaderFallback />}>
-              <Suspense fallback={<WaveShaderFallback />}>
-                <WaveShader index={index} />
+          {project.shaderMode === "image" && project.headerImageUrl ? (
+            <img
+              src={project.headerImageUrl}
+              alt=""
+              className="absolute inset-0 h-full w-full object-cover"
+            />
+          ) : project.shaderMode === "custom" && project.customCss ? (
+            project.customType === "react" ? (
+              <ShaderErrorBoundary
+                fallback={<WaveShader index={index} colors={shaderColors} params={shaderParams} isDark={isDark} />}
+              >
+                <CustomReactHeader code={project.customCss} />
+              </ShaderErrorBoundary>
+            ) : (
+              <ShaderErrorBoundary
+                fallback={<WaveShader index={index} colors={shaderColors} params={shaderParams} isDark={isDark} />}
+              >
+                <CustomHeader css={project.customCss} />
+              </ShaderErrorBoundary>
+            )
+          ) : shaderInView ? (
+            <ShaderErrorBoundary
+              fallback={<WaveShader index={index} colors={shaderColors} params={shaderParams} isDark={isDark} />}
+            >
+              <Suspense
+                fallback={<WaveShader index={index} colors={shaderColors} params={shaderParams} isDark={isDark} />}
+              >
+                <WaveShader index={index} colors={shaderColors} params={shaderParams} isDark={isDark} />
               </Suspense>
             </ShaderErrorBoundary>
           ) : (
-            <WaveShaderFallback />
+            <WaveShader index={index} colors={shaderColors} params={shaderParams} isDark={isDark} />
           )}
         </div>
       </div>
@@ -149,15 +184,39 @@ class ShaderBoundaryInner extends Component<
   }
 }
 
-export function WaveShaderFallback() {
+/**
+ * Renders owner-authored header HTML/CSS inside a sandboxed iframe so the markup
+ * can't reach the parent page (scripts, styles, events are all isolated). The
+ * card header's width/height are passed in so the custom layout fills it.
+ */
+function CustomHeader({ css }: { css: string }) {
+  const doc = `<!doctype html><html><head><meta charset="utf-8"><style>html,body{margin:0;height:100%;overflow:hidden;background:transparent;font-family:inherit;}*{box-sizing:border-box;}</style></head><body>${css}</body></html>`;
   return (
-    <div
-      className="h-full w-full"
-      style={{
-        background:
-          "radial-gradient(120% 100% at 15% 0%, hsl(193 85% 66% / 0.35) 0%, transparent 55%), radial-gradient(100% 90% at 85% 10%, hsl(196 100% 83% / 0.25) 0%, transparent 50%), radial-gradient(140% 120% at 50% 100%, hsl(195 100% 50% / 0.3) 0%, transparent 60%), var(--card)",
-      }}
+    <iframe
+      title="Custom card header"
+      srcDoc={doc}
+      sandbox=""
+      className="absolute inset-0 h-full w-full border-0 bg-transparent"
       aria-hidden
     />
+  );
+}
+
+/**
+ * Renders owner-authored React/JSX in the card header via react-live. If the
+ * snippet throws (bad import, runtime error, etc.) the surrounding
+ * ShaderErrorBoundary catches it and falls back to the shader, so a broken
+ * custom header never takes down the page. `noInline` lets owners write their
+ * own <render/> call; when omitted, the expression itself is rendered.
+ */
+function CustomReactHeader({ code }: { code: string }) {
+  return (
+    <div className="absolute inset-0 h-full w-full bg-transparent">
+      <LiveProvider code={code} noInline={false} disabled={false}>
+        <LivePreview />
+        {/* Surfaced only when the snippet fails to compile/run. */}
+        <LiveError className="absolute inset-x-0 bottom-0 hidden" />
+      </LiveProvider>
+    </div>
   );
 }

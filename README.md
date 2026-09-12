@@ -1,6 +1,6 @@
 # Personal Portfolio
 
-A designer-grade, single-page developer portfolio built as a **Vite + React 19 + TypeScript** app with a **Convex** backend (optional for local preview). It features a liquid-glass navbar, an animated shader backdrop, a fully interactive in-page terminal, scroll-reveal animations, and a cohesive "senior developer" type system.
+A designer-grade, single-page developer portfolio built as a **Vite + React 19 + TypeScript** app with a **Convex** backend. It features a liquid-glass navbar, an animated shader backdrop, a fully interactive in-page terminal, scroll-reveal animations, and a cohesive "senior developer" type system.
 
 ---
 
@@ -19,7 +19,7 @@ A designer-grade, single-page developer portfolio built as a **Vite + React 19 +
 | Backend / DB | Convex (serverless) + Convex Auth (email OTP + anonymous) |
 | Forms / PDF  | React Hook Form, Zod, jsPDF / pdf-lib |
 
-All source lives under `src/`. Use **Bun** as the package manager (npm also works).
+All source lives under `src/`. Package manager: **npm**.
 
 ---
 
@@ -38,9 +38,9 @@ All source lives under `src/`. Use **Bun** as the package manager (npm also work
 
 ## Prerequisites
 
-- **Node.js** ≥ 20 (developed on Node 26)
-- **Bun** ≥ 1.0 (recommended) — `npm install -g bun`
-- *(optional)* a **Convex** deployment for the live backend; **not required** for local preview (see Offline mode).
+- **Node.js** ≥ 20
+- **npm** (ships with Node)
+- A free **Convex** deployment for the live backend (see Setup).
 
 ---
 
@@ -51,34 +51,40 @@ All source lives under `src/`. Use **Bun** as the package manager (npm also work
 cd my-portfolio
 
 # 2. Install dependencies
-bun install          # or: npm install
-```
+npm install
 
-That's it — there is **no `requirements.txt`** because this is a Node/Bun project; all dependencies are declared in `package.json` / `package-lock.json`.
+# 3. Configure environment
+cp .env.example .env.local
+#   then fill in VITE_CONVEX_URL (see Running Locally)
+```
 
 ---
 
 ## Running Locally
 
-### Option A — Offline / preview mode (recommended for quick start)
+### Option A — Offline / preview mode (quick start, no backend)
 
-The app runs **fully offline** with no Convex backend. When `VITE_CONVEX_URL` is unset, Vite aliases the Convex imports to a local in-memory **shim** (`shim/`) backed by `src/data/mock-backend.json`.
+When `VITE_CONVEX_URL` is **unset**, the app runs fully offline using a local
+in-memory **shim** (`shim/`) seeded from `src/data/mock-backend.json`.
 
 ```bash
-bun dev              # or: npm run dev
+npm run dev
 ```
 
 Open **http://localhost:5173**.
 
 ### Option B — Full Convex backend
 
-1. Create / reuse a Convex deployment and download its `.env.local` (contains `CONVEX_DEPLOYMENT` and `VITE_CONVEX_URL`) into the project root.
+1. Create / reuse a Convex deployment and download its `.env.local`
+   (contains `CONVEX_DEPLOYMENT` and `VITE_CONVEX_URL`) into the project root:
+   ```bash
+   npx convex dev
+   ```
 2. Start Convex + the app:
-
-```bash
-bunx convex dev      # pushes schema + functions, watches for changes
-bun dev              # in a second terminal
-```
+   ```bash
+   npx convex dev     # pushes schema + functions, watches for changes
+   npm run dev        # in a second terminal
+   ```
 
 With `VITE_CONVEX_URL` present, the app talks to your real deployment instead of the shim.
 
@@ -88,12 +94,12 @@ With `VITE_CONVEX_URL` present, the app talks to your real deployment instead of
 
 | Script            | Description |
 |-------------------|-------------|
-| `bun dev`         | Start the Vite dev server (port 5173). |
-| `bun build`       | Type-check (`tsc -b`) then production build (`vite build`). |
-| `bun preview`     | Preview the production build locally. |
-| `bun lint`        | Run ESLint. |
-| `bun format`      | Format with Prettier. |
-| `bunx convex dev` | Run the Convex backend (dev loop). |
+| `npm run dev`     | Start the Vite dev server (port 5173). |
+| `npm run build`   | Type-check (`tsc -b`) then production build (`vite build`). |
+| `npm run preview` | Preview the production build locally. |
+| `npm run lint`    | Run ESLint. |
+| `npm run format`  | Format with Prettier. |
+| `npx convex dev`  | Run the Convex backend (dev loop). |
 
 ---
 
@@ -104,15 +110,15 @@ With `VITE_CONVEX_URL` present, the app talks to your real deployment instead of
 | `CONVEX_DEPLOYMENT` | Convex  | Identifies your deployment. |
 | `VITE_CONVEX_URL`   | Client  | When **set**, the app uses the real Convex backend; when **unset**, it falls back to the offline shim. |
 | `JWKS` / `JWT_PRIVATE_KEY` / `SITE_URL` | Convex Auth | Auth signing keys for the backend. |
+| `OWNER_EMAIL`      | Backend | Email allowed to access the owner workspace at `/dashboard`. Set this to **your** email or the workspace stays locked to the original owner. |
 
-There is no `.env.local` committed; for local preview you don't need any of these.
+There is no `.env.local` committed; for local preview you only need `VITE_CONVEX_URL`.
 
 ---
 
-## Authentication (already wired up)
+## Authentication
 
 - Built on **Convex Auth** with **email OTP** + **anonymous** users.
-- **Do not modify** `src/convex/auth/emailOtp.ts`, `src/convex/auth.config.ts`, or `src/convex/auth.ts`.
 - Frontend: use the `useAuth` hook — never read auth state manually.
 
 ```ts
@@ -121,7 +127,14 @@ const { isLoading, isAuthenticated, user, signIn, signOut } = useAuth();
 ```
 
 - `/auth` is the sign-in / sign-up page; `/dashboard` is protected by `RequireAuth`.
-- Backend: use `getCurrentUser` from `src/convex/users.ts`.
+
+---
+
+## Owner Workspace
+
+The site has an owner workspace at **`/dashboard`** where the site owner can manage
+content. Sign in at `/auth` with the email set as `OWNER_EMAIL`, then open
+`/dashboard`. (Requires a live Convex backend — see Setup.)
 
 ---
 
@@ -130,8 +143,8 @@ const { isLoading, isAuthenticated, user, signIn, signOut } = useAuth();
 - **Pages** in `src/pages/`, **components** in `src/components/` (UI primitives in `src/components/ui/`).
 - **Mobile responsive** and **light/dark** aware by default; prefer thin borders over shadows.
 - **Animations**: Framer Motion for reveals; GSAP/Lenis for scroll.
-- **Type system**: Inter (body), JetBrains Mono (labels/code), Instrument Serif (editorial display), Nasalization (section numerals), SF Pro Display (stats/headlines). Terminal keeps its own monospace font.
-- **Convex**: schema in `src/convex/schema.ts`; external calls go in `"use node"` actions; reference docs as `Id<"Table">` / `Doc<"Table">`; never add return-type validators.
+- **Type system**: Inter (body), JetBrains Mono (labels/code), Instrument Serif (editorial display). Terminal keeps its own monospace font.
+- **Convex**: schema in `src/convex/schema.ts`; external calls go in `"use node"` actions; reference docs as `Id<"Table">` / `Doc<"Table">`.
 
 ---
 
@@ -142,18 +155,18 @@ my-portfolio/
 ├── index.html
 ├── vite.config.ts          # shim alias logic + chunking
 ├── src/
-│   ├── main.tsx             # router + providers + font imports
-│   ├── index.css            # theme tokens, liquid-glass utilities, fonts
-│   ├── pages/               # Landing, Auth, Dashboard, NotFound
+│   ├── main.tsx            # router + providers + font imports
+│   ├── index.css           # theme tokens, liquid-glass utilities, fonts
+│   ├── pages/              # Landing, Auth, Dashboard, NotFound
 │   ├── components/
-│   │   ├── ui/              # shadcn primitives
-│   │   └── portfolio/       # Hero, Navbar, Terminal, WorkCard, Skills, …
-│   ├── convex/              # schema, auth, functions, _generated
-│   ├── data/portfolio.ts    # all site content (profile, projects, skills)
-│   ├── hooks/               # use-auth, use-github-repos, …
+│   │   ├── ui/             # shadcn primitives
+│   │   └── portfolio/      # Hero, Navbar, Terminal, WorkCard, Skills, …
+│   ├── convex/             # schema, auth, functions, _generated
+│   ├── data/portfolio.ts   # all site content (profile, projects, skills)
+│   ├── hooks/              # use-auth, …
 │   └── lib/utils.ts
-├── shim/                    # offline Convex stand-in (used when no VITE_CONVEX_URL)
-├── public/                  # logo, resume, manifest
+├── shim/                   # offline Convex stand-in (used when no VITE_CONVEX_URL)
+├── public/                 # logo, resume, manifest
 └── convex.json
 ```
 
@@ -162,8 +175,16 @@ my-portfolio/
 ## Build & Deploy
 
 ```bash
-bun build                    # outputs to dist/
-bun preview                  # serve the build locally
+npm run build      # outputs to dist/
+npm run preview    # serve the build locally
 ```
 
-For production with a live backend, set `VITE_CONVEX_URL` (and the Convex auth env vars) in your host's environment, then build and deploy `dist/`.
+For production with a live backend, set `VITE_CONVEX_URL` (and the Convex auth env
+vars) in your host's environment, then build and deploy `dist/` to a static host
+(e.g. Vercel). Deploy backend code with `npx convex deploy`.
+
+---
+
+## License
+
+MIT — feel free to fork and make it yours.

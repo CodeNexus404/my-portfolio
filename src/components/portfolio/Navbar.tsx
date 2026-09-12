@@ -2,8 +2,10 @@
 
 import { motion, useScroll, useSpring } from "framer-motion";
 import { Command, Menu, X } from "lucide-react";
-import { useEffect, useState } from "react";
-import { profile } from "@/data/portfolio";
+import { useEffect, useRef, useState } from "react";
+import { useSiteContent } from "@/hooks/use-site-content";
+import { useScopedTheme } from "@/theme/theme";
+import { Moon, Sun } from "lucide-react";
 
 const navLinks = [
   { label: "Home", href: "#top" },
@@ -29,24 +31,44 @@ const navLinks = [
 // the capsule, reinforcing the wet-glass read.
 function LiquidCapsule({ children }: { children: React.ReactNode }) {
   const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
+  const capsuleRef = useRef<HTMLDivElement>(null);
+
+  // Scroll adaptation: as the page scrolls, the clear glass gains a touch more
+  // frost/definition (--nav-intensity 0→1) so it visibly "adapts" to the content
+  // moving behind it, exactly like the adaptive nav bars on iOS.
+  useEffect(() => {
+    let raf = 0;
+    const onScroll = () => {
+      if (raf) return;
+      raf = requestAnimationFrame(() => {
+        raf = 0;
+        const y = window.scrollY || 0;
+        const intensity = Math.min(1, y / 400);
+        capsuleRef.current?.style.setProperty("--nav-intensity", String(intensity));
+      });
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      if (raf) cancelAnimationFrame(raf);
+    };
+  }, []);
 
   return (
     <div
+      ref={capsuleRef}
       onMouseMove={(e) => {
         const r = e.currentTarget.getBoundingClientRect();
         setPos({ x: e.clientX - r.left, y: e.clientY - r.top });
       }}
       onMouseLeave={() => setPos(null)}
-      className="liquid-glass pointer-events-auto relative mx-auto flex h-14 max-w-4xl items-center justify-between overflow-hidden rounded-[1.75rem] px-3 shadow-[0_8px_32px_-8px_rgba(0,0,0,0.55),inset_0_1px_0_0_rgba(255,255,255,0.25)] transition-all duration-500 sm:px-4"
-      style={{
-        background:
-          "linear-gradient(180deg, rgba(255,255,255,0.16) 0%, rgba(255,255,255,0.06) 40%, rgba(255,255,255,0.02) 100%)",
-      }}
+      className="liquid-glass navbar-glass pointer-events-auto relative mx-auto flex h-14 max-w-4xl items-center justify-between overflow-hidden rounded-[1.75rem] px-3 shadow-[0_8px_32px_-8px_rgba(0,0,0,0.45)] transition-all duration-500 sm:px-4"
     >
-      {/* Specular top highlight — the bright glass edge */}
+      {/* Specular top highlight — the bright glass edge (theme-aware) */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/60 to-transparent"
+        className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[color-mix(in_srgb,var(--foreground)_35%,transparent)] to-transparent"
       />
       {/* Cursor sheen */}
       {pos && (
@@ -70,6 +92,8 @@ function LiquidCapsule({ children }: { children: React.ReactNode }) {
  * a comment). Free-floating frosted capsule with specular edge + cursor sheen.
  */
 export default function Navbar() {
+  const { profile: liveProfile } = useSiteContent();
+  const { theme: siteTheme, toggle: toggleSiteTheme } = useScopedTheme();
   const [isVisible, setIsVisible] = useState(true);
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -143,7 +167,7 @@ export default function Navbar() {
               <a
                 key={link.href}
                 href={link.href}
-                className="rounded-full px-2.5 py-1.5 font-mono text-[11px] text-foreground/60 transition-all duration-200 hover:bg-white/10 hover:text-foreground lg:px-3 lg:text-[12px]"
+                className="rounded-full px-2.5 py-1.5 font-mono text-[11px] text-foreground/60 transition-all duration-200 hover:bg-foreground/10 hover:text-foreground dark:hover:bg-white/10 lg:px-3 lg:text-[12px]"
               >
                 {link.label}
               </a>
@@ -152,17 +176,25 @@ export default function Navbar() {
 
           {/* Right cluster — ⌘K hint + Resume / mobile menu */}
           <div className="flex shrink-0 items-center gap-2">
-            <span className="hidden lg:inline-flex items-center gap-1 rounded-full border border-white/15 bg-white/[0.06] px-2.5 py-1 font-mono text-[10px] text-muted-foreground/80">
+            <span className="hidden lg:inline-flex items-center gap-1 rounded-full border border-border bg-foreground/[0.04] px-2.5 py-1 font-mono text-[10px] text-muted-foreground/80 dark:border-white/15 dark:bg-white/[0.06]">
               <Command className="size-3" aria-hidden />K
             </span>
             <a
-              href={profile.resumeHref}
+              href={liveProfile.resumeHref}
               target="_blank"
               rel="noopener noreferrer"
-              className="hidden rounded-full border border-white/20 bg-white/[0.08] px-4 py-1.5 text-[12px] text-foreground/90 backdrop-blur-xl transition-all duration-200 hover:border-accent/50 hover:text-accent active:scale-95 md:inline-flex"
+              className="hidden rounded-full border border-white/20 bg-white/[0.08] px-4 py-1.5 text-[12px] text-foreground/90 backdrop-blur-xl transition-all duration-200 hover:border-accent/50 hover:text-accent active:scale-95 dark:border-white/20 dark:bg-white/[0.08] md:inline-flex"
             >
               Resume
             </a>
+            <button
+              type="button"
+              onClick={toggleSiteTheme}
+              aria-label={siteTheme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+              className="hidden size-9 items-center justify-center rounded-full border border-white/15 bg-white/[0.06] text-foreground/90 backdrop-blur-xl transition-all duration-200 hover:border-accent/50 hover:text-accent md:inline-flex"
+            >
+              {siteTheme === "dark" ? <Sun className="size-4" /> : <Moon className="size-4" />}
+            </button>
             <button
               type="button"
               onClick={() => setMobileOpen(!mobileOpen)}
@@ -198,7 +230,7 @@ export default function Navbar() {
               </motion.a>
             ))}
             <motion.a
-              href={profile.resumeHref}
+              href={liveProfile.resumeHref}
               target="_blank"
               rel="noopener noreferrer"
               onClick={() => setMobileOpen(false)}
