@@ -64,6 +64,7 @@ export const getEditable = query({
           bootLines: [],
           defaultCommands: ["help", "whoami", "projects", "skills", "socials", "clear"],
           commandDescriptions: {},
+          commandResponses: {},
         },
       },
       projects: await Promise.all(
@@ -103,6 +104,8 @@ export const getEditable = query({
       skills: skillsRow ?? {
         groups: [],
         note: "",
+        intro: null,
+        marquee: null,
       },
       background: content.background ?? DEFAULT_BACKGROUND,
       backgroundImageUrl,
@@ -221,6 +224,12 @@ export const updateTerminal = mutation({
     ),
     defaultCommands: v.array(v.string()),
     commandDescriptions: v.optional(v.record(v.string(), v.string())),
+    // Optional custom output lines per command (command → lines[]). When a
+    // command has an entry, the public terminal shows these instead of its
+    // built-in logic.
+    commandResponses: v.optional(
+      v.record(v.string(), v.array(v.string())),
+    ),
   },
   handler: async (ctx, args) => {
     await requireOwner(ctx);
@@ -239,9 +248,29 @@ export const updateTerminal = mutation({
       .filter((c) => c.length > 0)
       .slice(0, 12);
     const commandDescriptions = args.commandDescriptions ?? {};
+    // Normalize custom responses: lowercase keys (commands are matched
+    // case-insensitively), drop empties, cap length per line + per command.
+    const commandResponses: Record<string, string[]> = {};
+    if (args.commandResponses) {
+      for (const [cmd, lines] of Object.entries(args.commandResponses)) {
+        const key = cmd.trim().toLowerCase();
+        if (!key) continue;
+        const cleaned = lines
+          .map((l) => clampStr(l, MAX_LEN.medium))
+          .filter((l) => l.length > 0)
+          .slice(0, 30);
+        if (cleaned.length) commandResponses[key] = cleaned;
+      }
+    }
     const id = await getOrCreateContent(ctx);
     await ctx.db.patch(id, {
-      terminal: { prompt, bootLines, defaultCommands, commandDescriptions },
+      terminal: {
+        prompt,
+        bootLines,
+        defaultCommands,
+        commandDescriptions,
+        commandResponses,
+      },
     });
   },
 });
@@ -499,9 +528,24 @@ export const reorderExperience = mutation({
 export const updateSkills = mutation({
   args: {
     groups: v.array(
-      v.object({ label: v.string(), items: v.array(v.string()) }),
+      v.object({
+        label: v.string(),
+        items: v.array(
+          v.object({ name: v.string(), icon: v.optional(v.string()) }),
+        ),
+      }),
     ),
     note: v.string(),
+    // Optional intro line (subtitle under the section header).
+    intro: v.optional(v.string()),
+    // Optional marquee layout. Clamped so a bad value can't break the animation.
+    marquee: v.optional(
+      v.object({
+        rows: v.number(),
+        baseSpeed: v.number(),
+        alternateDirection: v.boolean(),
+      }),
+    ),
   },
   handler: async (ctx, args) => {
     await requireOwner(ctx);
@@ -509,18 +553,44 @@ export const updateSkills = mutation({
       .map((g) => ({
         label: clampStr(g.label, MAX_LEN.short),
         items: g.items
-          .map((it) => clampStr(it, MAX_LEN.short))
-          .filter((it) => it.length > 0),
+          .map((it) => ({
+            name: clampStr(it.name, MAX_LEN.short),
+            // Keep the icon key only if it's a non-empty string; the dashboard
+            // sends "none" to clear an icon, which we normalize to undefined.
+            icon:
+              it.icon && it.icon !== "none"
+                ? clampStr(it.icon, MAX_LEN.short)
+                : undefined,
+          }))
+          .filter((it) => it.name.length > 0),
       }))
       .filter((g) => g.label.length > 0 && g.items.length > 0)
       .slice(0, 12);
     const note = clampStr(args.note, MAX_LEN.medium);
+    // Keep intro only when non-empty; blank means "use the static default".
+    const intro =
+      args.intro && args.intro.trim().length > 0
+        ? clampStr(args.intro, MAX_LEN.medium)
+        : undefined;
+
+    // Normalize marquee: clamp rows to 1–6, baseSpeed to 10–240s, default the
+    // alternate-direction flag. Only stored when the owner actually sets it.
+    const marquee = args.marquee
+      ? {
+          rows: Math.min(6, Math.max(1, Math.round(args.marquee.rows || 2))),
+          baseSpeed: Math.min(
+            240,
+            Math.max(10, Math.round(args.marquee.baseSpeed || 70)),
+          ),
+          alternateDirection: args.marquee.alternateDirection !== false,
+        }
+      : undefined;
 
     const existing = await ctx.db.query("skills").first();
     if (existing) {
-      await ctx.db.patch(existing._id, { groups, note });
+      await ctx.db.patch(existing._id, { groups, note, intro, marquee });
     } else {
-      await ctx.db.insert("skills", { groups, note });
+      await ctx.db.insert("skills", { groups, note, intro, marquee });
     }
   },
 });

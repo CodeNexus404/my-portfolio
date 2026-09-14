@@ -47,8 +47,77 @@ function GrainGradientShader() {
     ? background.colorBack || "hsl(0, 0%, 0%)"
     : "#e6ecf2";
 
+  // WebGL contexts can be evicted by the browser on very tall pages (it caps the
+  // number of live contexts). When that happens the shader silently goes blank —
+  // which is exactly the "background turns off at the bottom of the page" bug.
+  // We listen for the canvas `webglcontextlost` event and bump a remount key so
+  // React spins up a fresh, working context. The canvas the lib renders mounts
+  // asynchronously (lazy + Suspense), so we can't rely on it being present on the
+  // first effect run — a MutationObserver attaches the listeners as soon as the
+  // <canvas> appears, and re-attaches after every remount (ctxKey change).
+  const [ctxKey, setCtxKey] = useState(0);
+  const shaderRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = shaderRef.current;
+    if (!el) return;
+
+    const attach = (canvas: HTMLCanvasElement) => {
+      // Debounce remounts: a single context-eviction event can fire `lost` several
+      // times in a row, and a fresh context can be lost again immediately on a very
+      // long page. Without this guard we'd spin ctxKey forever and thrash the GPU.
+      let lastRemount = 0;
+      const onLost = (e: Event) => {
+        e.preventDefault();
+        const now = Date.now();
+        if (now - lastRemount < 1500) return;
+        lastRemount = now;
+        // Remount to obtain a fresh, working WebGL context. This is the only
+        // reliable recovery on long pages where the browser silently evicts the
+        // oldest context when the GPU context budget is exceeded.
+        setCtxKey((k) => k + 1);
+      };
+      const onRestored = () => {
+        // The context was recovered by the browser, but the GrainGradient lib
+        // often doesn't repaint its internal canvas after a restore — leaving a
+        // blank background. A debounced remount forces it to redraw cleanly,
+        // which is what makes the shader reappear after the brief eviction that
+        // happens when scrolling to the bottom of a long page.
+        const now = Date.now();
+        if (now - lastRemount < 1500) return;
+        lastRemount = now;
+        setCtxKey((k) => k + 1);
+      };
+      canvas.addEventListener("webglcontextlost", onLost);
+      canvas.addEventListener("webglcontextrestored", onRestored);
+      return () => {
+        canvas.removeEventListener("webglcontextlost", onLost);
+        canvas.removeEventListener("webglcontextrestored", onRestored);
+      };
+    };
+
+    // Attach now if the canvas is already there.
+    let detach = () => {};
+    const existing = el.querySelector("canvas");
+    if (existing) detach = attach(existing);
+
+    // Otherwise watch for it to be inserted (covers async/lazy mount + remounts).
+    const observer = new MutationObserver(() => {
+      const c = el.querySelector("canvas");
+      if (!c) return;
+      detach();
+      detach = attach(c);
+    });
+    observer.observe(el, { childList: true, subtree: true });
+
+    return () => {
+      observer.disconnect();
+      detach();
+    };
+  }, [ctxKey]);
+
   return (
-    <div className="absolute inset-0 h-full w-full">
+    <div key={ctxKey} ref={shaderRef} className="absolute inset-0 h-full w-full">
       <GrainGradient
         style={{ height: "100%", width: "100%" }}
         colorBack={colorBack}
@@ -101,26 +170,12 @@ function BackgroundCustomLayer() {
 }
 
 export default function AnimatedBackdrop() {
-  // The GrainGradient shader drives its own rAF continuously. When the tab is
-  // hidden there's nothing to paint, so unmount it and stop the GPU loop — this
-  // keeps the page from wasting frames in the background and returns them to the
-  // foreground when the user comes back.
-  const [visible, setVisible] = useState(
-    typeof document === "undefined" ? true : !document.hidden,
-  );
-
-  useEffect(() => {
-    const onVisibility = () => setVisible(!document.hidden);
-    document.addEventListener("visibilitychange", onVisibility);
-    return () => document.removeEventListener("visibilitychange", onVisibility);
-  }, []);
-
   const { background, backgroundImageUrl } = useSiteContent();
 
-  // Custom + image modes are static (no rAF), so render them regardless of visibility.
+  // Custom + image modes are static (no rAF).
   if (background.mode === "custom" && background.customCss) {
     return (
-      <ShaderErrorBoundary fallback={<CanvasFallback />}>
+      <ShaderErrorBoundary fallback={null}>
         <BackgroundCustomLayer />
       </ShaderErrorBoundary>
     );
@@ -136,103 +191,23 @@ export default function AnimatedBackdrop() {
     );
   }
 
+  // Only the real GrainGradient shader ever renders — no CSS/canvas fallback that
+  // would otherwise flash a *different* background when the WebGL context is
+  // briefly evicted (e.g. scrolling to the bottom of a long page). The
+  // webglcontextlost handler inside GrainGradientShader recovers the live context;
+  // until then the wrapper just shows its own theme background, never a substitute
+  // shader. Suspense/error fall back to nothing so the real shader is the only look.
   return (
-    <ShaderErrorBoundary fallback={<CanvasFallback />}>
-      <Suspense fallback={<CanvasFallback />}>
-        {visible ? <GrainGradientShader /> : <CanvasFallback />}
+    <ShaderErrorBoundary fallback={null}>
+      <Suspense fallback={null}>
+        <GrainGradientShader />
       </Suspense>
     </ShaderErrorBoundary>
   );
 }
 
-function CanvasFallback() {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-
-  useEffect(() => {
-    const canvasEl = canvasRef.current;
-    if (!canvasEl) return;
-    const ctx = canvasEl.getContext("2d");
-    if (!ctx) return;
-
-    const canvas = canvasEl; // capture non-null refs for the animation loop
-    let animFrame = 0;
-    let lastTime = 0;
-    const interval = 1000 / 30; // 30fps — smooth enough, cheap
-    const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
-
-    const resize = () => {
-      canvas.width = window.innerWidth * dpr;
-      canvas.height = window.innerHeight * dpr;
-    };
-    resize();
-    window.addEventListener("resize", resize);
-
-    const draw = (time: number) => {
-      animFrame = requestAnimationFrame(draw);
-      if (time - lastTime < interval) return;
-      lastTime = time;
-      const w = canvas.width;
-      const h = canvas.height;
-      const t = time * 0.00025;
-      ctx.fillStyle = "#000";
-      ctx.fillRect(0, 0, w, h);
-
-      // Cyan family matching the GrainGradient palette
-      const blobs = [
-        {
-          x: 0.1 + Math.sin(t * 0.8) * 0.35,
-          y: 0.25 + Math.cos(t * 0.5) * 0.35,
-          r: 0.65,
-          color: [0, 216, 168],
-        },
-        {
-          x: 0.85 + Math.cos(t * 0.6) * 0.3,
-          y: 0.7 + Math.sin(t * 0.7) * 0.3,
-          r: 0.6,
-          color: [0, 255, 212],
-        },
-        {
-          x: 0.5 + Math.sin(t * 0.45) * 0.25,
-          y: 0.15 + Math.cos(t * 0.35) * 0.35,
-          r: 0.55,
-          color: [0, 180, 255],
-        },
-      ];
-      for (const blob of blobs) {
-        const g = ctx.createRadialGradient(
-          blob.x * w,
-          blob.y * h,
-          0,
-          blob.x * w,
-          blob.y * h,
-          blob.r * w,
-        );
-        g.addColorStop(0, `rgba(${blob.color.join(",")},0.85)`);
-        g.addColorStop(0.35, `rgba(${blob.color.join(",")},0.45)`);
-        g.addColorStop(0.7, `rgba(${blob.color.join(",")},0.12)`);
-        g.addColorStop(1, "rgba(0,0,0,0)");
-        ctx.fillStyle = g;
-        ctx.fillRect(0, 0, w, h);
-      }
-    };
-    animFrame = requestAnimationFrame(draw);
-    return () => {
-      cancelAnimationFrame(animFrame);
-      window.removeEventListener("resize", resize);
-    };
-  }, []);
-
-  return (
-    <canvas
-      ref={canvasRef}
-      className="absolute inset-0 h-full w-full"
-      aria-hidden
-    />
-  );
-}
-
 class ShaderErrorBoundary extends Component<
-  { fallback: ReactNode; children: ReactNode },
+  { fallback: ReactNode | null; children: ReactNode },
   { failed: boolean }
 > {
   state = { failed: false };
@@ -241,7 +216,7 @@ class ShaderErrorBoundary extends Component<
   }
   componentDidCatch(err: Error) {
     console.warn(
-      "[AnimatedBackdrop] shader crashed, using canvas fallback:",
+      "[AnimatedBackdrop] shader crashed; background will be blank until reload:",
       err.message,
     );
   }

@@ -53,6 +53,11 @@ export const replyToMessage = action({
     let emailed = false;
     let emailError: string | undefined;
     const apiKey = process.env.RESEND_API_KEY;
+    // RESEND_FROM lets you control the sender without redeploying; falls back to
+    // the test sender (onboarding@resend.dev) when unset. Verify your own domain
+    // in Resend to deliver reliably to real inboxes.
+    const from =
+      process.env.RESEND_FROM ?? `Sahil Shedge <onboarding@resend.dev>`;
     if (!apiKey) {
       emailError =
         "RESEND_API_KEY is not set — reply saved but not emailed yet.";
@@ -65,9 +70,7 @@ export const replyToMessage = action({
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            // onboarding@resend.dev works without domain verification while
-            // testing; verify your own domain in Resend to deliver reliably.
-            from: `Sahil Shedge <onboarding@resend.dev>`,
+            from,
             to: [message.email],
             reply_to: "shedgesahil2005@gmail.com",
             subject: "Re: your message from sahilshedge.dev",

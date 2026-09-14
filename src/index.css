@@ -384,6 +384,51 @@
   }
 }
 
+/* ── Mobile + 120Hz smoothness ────────────────────────────────────────────────
+   Promote the continuous marquee transforms to the GPU compositor so they stay
+   buttery at 120Hz: translate3d (not just translateX) + backface-visibility
+   avoids main-thread repaints. Tighten section padding and soften the heavy
+   backdrop blur on small screens so scrolling never drops frames. */
+[class*="animate-marquee"] {
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+/* Glass chips in the marquee: contain paint/layout so each tile composites
+   independently without forcing a full-section repaint on movement. */
+.glass-chip {
+  contain: layout paint;
+  will-change: transform;
+}
+
+@media (max-width: 640px) {
+  /* Smaller vertical rhythm → less to paint per scroll frame. */
+  section[id] {
+    scroll-margin-top: 5rem;
+  }
+  /* The frosted content sheet uses a lighter blur on phones — full 2xl blur is
+     the most expensive paint on the page and isn't worth it on small screens. */
+  .backdrop-blur-2xl {
+    --tw-backdrop-blur: blur(14px);
+    backdrop-filter: blur(14px) saturate(150%);
+    -webkit-backdrop-filter: blur(14px) saturate(150%);
+  }
+  /* Slightly faster marquee default on mobile keeps motion readable without
+     feeling sluggish; the owner's speed setting still wins via inline style. */
+  [class*="animate-marquee"] {
+    will-change: transform;
+  }
+}
+
+/* Touch devices: drop the trailing desktop cursor (no hover) and avoid hover
+   paint work. Pointer-fine-only effects already guard this in JS. */
+@media (hover: none) and (pointer: coarse) {
+  [class*="animate-marquee"]:hover {
+    animation-play-state: running;
+  }
+}
+
 /* Outlined display text — footer wordmark: transparent fill with an outline
    whose stroke width scales with the font size (em-based). The stroke uses
    the theme's off-white primary and swaps to the cyan accent while its
@@ -641,39 +686,19 @@
   pointer-events: none;
 }
 
-/* Lightweight glass for many animated elements (skill chips in a marquee): same
-   frosted look WITHOUT backdrop-filter, so dozens of them animating per frame
-   don't tank the framerate. Static glass (navbar/buttons) keeps real blur. */
+/* Skill chips in the marquee: static card look (no gradient, no frosted glass)
+   so they match the other cards on the site — solid theme-aware fill with a
+   hairline border. Keep the contain/will-change hints from the earlier
+   .glass-chip rule so dozens animating per frame stay smooth. */
 .glass-chip {
   position: relative;
   isolation: isolate;
-  /* Theme-aware border/fill: faint white on dark, faint ink on light, so the
-     chip stays visible in BOTH modes (no invisible white-on-white). */
-  border: 1px solid color-mix(in srgb, var(--foreground) 18%, transparent);
-  background: linear-gradient(
-    165deg,
-    color-mix(in srgb, var(--background) 60%, var(--foreground) 14%) 0%,
-    color-mix(in srgb, var(--background) 78%, var(--foreground) 6%) 42%,
-    color-mix(in srgb, var(--background) 70%, var(--foreground) 3%) 100%
-  );
-  box-shadow:
-    0 4px 18px -8px rgba(0, 0, 0, 0.4),
-    inset 0 1px 0 0 color-mix(in srgb, var(--foreground) 25%, transparent);
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
 }
 .glass-chip::before {
-  content: "";
-  position: absolute;
-  inset-inline: 0;
-  top: 0;
-  height: 35%;
-  border-radius: inherit;
-  background: linear-gradient(
-    to bottom,
-    color-mix(in srgb, var(--foreground) 28%, transparent),
-    transparent
-  );
-  opacity: 0.5;
-  pointer-events: none;
+  content: none;
 }
 
 /* ── CssBackdrop — lightweight full-screen background (no WebGL) ──────────────

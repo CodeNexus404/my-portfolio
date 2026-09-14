@@ -327,17 +327,6 @@ export const VlyToolbar: React.FC = () => {
     // Optionally do something on unhover
   }, []);
 
-  // Get project name for redirect URL
-  const getProjectName = () => {
-    if (typeof window !== "undefined") {
-      const hostname = window.location.hostname;
-      // Extract project name from hostname (e.g., "projectname.vly.sh")
-      const match = hostname.match(/^([^.]+)\.vly\.sh$/);
-      return match ? match[1] : "unknown";
-    }
-    return "unknown";
-  };
-
   // Handle escape key to close modal
   React.useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -364,8 +353,8 @@ export const VlyToolbar: React.FC = () => {
   };
 
   const handleGoToProject = () => {
-    const projectName = getProjectName();
-    window.location.href = `https://freebuff.com/project/${projectName}?publish=true`;
+    // External publish link removed — keep the dev overlay dismissal only.
+    setShowDevOverlay(false);
   };
 
   return (

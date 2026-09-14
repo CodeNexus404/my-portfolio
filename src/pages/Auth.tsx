@@ -15,10 +15,11 @@ import {
 } from "@/components/ui/input-otp";
 
 import { useAuth } from "@/hooks/use-auth";
-import { ArrowRight, Loader2, Mail, UserX } from "lucide-react";
+import { ArrowRight, Loader2, Mail, Moon, Sun, UserX } from "lucide-react";
 import { Suspense, useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import { profile } from "@/data/portfolio";
+import { useScopedTheme, ThemeScopeProvider } from "@/theme/theme";
 
 interface AuthProps {
   redirectAfterAuth?: string;
@@ -49,6 +50,7 @@ function Monogram({ onClick }: { onClick: () => void }) {
 }
 
 function Auth({ redirectAfterAuth }: AuthProps = {}) {
+  const { theme, toggle } = useScopedTheme();
   const { isLoading: authLoading, isAuthenticated, signIn } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -124,6 +126,16 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
+      {/* Theme toggle — shares the dashboard's theme scope so switching here is
+          connected to the dashboard (same storageKey), just like the dashboard. */}
+      <button
+        type="button"
+        onClick={toggle}
+        aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+        className="fixed top-4 right-4 z-50 inline-flex size-9 cursor-pointer items-center justify-center rounded-md border border-border bg-card text-foreground transition-colors hover:border-primary/40"
+      >
+        {theme === "dark" ? <Sun className="size-4" /> : <Moon className="size-4" />}
+      </button>
       {/* Auth Content */}
       <div className="flex-1 flex items-center justify-center">
         <div className="flex items-center justify-center h-full flex-col">
@@ -296,8 +308,10 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
 
 export default function AuthPage(props: AuthProps) {
   return (
-    <Suspense>
-      <Auth {...props} />
-    </Suspense>
+    <ThemeScopeProvider storageKey="portfolio-dashboard-theme" defaultTheme="dark">
+      <Suspense>
+        <Auth {...props} />
+      </Suspense>
+    </ThemeScopeProvider>
   );
 }

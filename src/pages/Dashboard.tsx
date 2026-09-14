@@ -25,7 +25,7 @@ import { GrainGradient } from "@paper-design/shaders-react";
 import { api } from "@/convex/_generated/api";
 import type { Doc, Id } from "@/convex/_generated/dataModel";
 import { profile as staticProfile, selectedWorks, experience as staticExperience, skills as staticSkills } from "@/data/portfolio";
-import { brandFor } from "@/components/portfolio/skillBrands";
+import { brandFor, ICON_KEYS } from "@/components/portfolio/skillBrands";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useSiteContent } from "@/hooks/use-site-content";
 import { useScopedTheme, ThemeScopeProvider } from "@/theme/theme";
@@ -52,13 +52,267 @@ function formatDate(ts: number) {
   });
 }
 
+/** Inbox header with the bulk-select toolbar (select all / clear / delete selected). */
+function InboxHeader({
+  total,
+  unreadCount,
+  selectedCount,
+  onSelectAll,
+  onClearSelection,
+  onDeleteSelected,
+  onMarkRead,
+  onMarkUnread,
+  deleting,
+  marking,
+}: {
+  total: number;
+  unreadCount: number;
+  selectedCount: number;
+  onSelectAll: () => void;
+  onClearSelection: () => void;
+  onDeleteSelected: () => void;
+  onMarkRead: () => void;
+  onMarkUnread: () => void;
+  deleting: boolean;
+  marking: boolean;
+}) {
+  return (
+    <header className="flex flex-wrap items-center gap-3 border-b border-border/60 pb-4">
+      <div className="flex size-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
+        <Inbox className="size-4.5" />
+      </div>
+      <h2 className="text-base font-bold tracking-tight">Messages</h2>
+      {unreadBadgeCount(unreadCount) > 0 ? (
+        <span className="inline-flex items-center gap-1 rounded-full bg-primary/15 px-2 py-0.5 font-mono text-[11px] font-semibold text-primary">
+          {unreadBadgeCount(unreadCount)} new
+        </span>
+      ) : null}
+
+      {total > 0 ? (
+        <div className="ml-auto flex flex-wrap items-center gap-2">
+          {selectedCount > 0 ? (
+            <>
+              <span className="font-mono text-xs text-muted-foreground">
+                {selectedCount} selected
+              </span>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="cursor-pointer gap-1.5"
+                onClick={onMarkUnread}
+                disabled={marking || deleting}
+              >
+                {marking ? <Loader2 className="size-3.5 animate-spin" /> : <Mail className="size-3.5" />}
+                Mark unread
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="cursor-pointer gap-1.5"
+                onClick={onMarkRead}
+                disabled={marking || deleting}
+              >
+                {marking ? <Loader2 className="size-3.5 animate-spin" /> : <MailOpen className="size-3.5" />}
+                Mark read
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="cursor-pointer gap-1.5"
+                onClick={onClearSelection}
+                disabled={deleting || marking}
+              >
+                Clear
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="destructive"
+                className="cursor-pointer gap-1.5"
+                onClick={() => {
+                  if (
+                    window.confirm(
+                      `Delete ${selectedCount} selected message${selectedCount === 1 ? "" : "s"}?`,
+                    )
+                  ) {
+                    onDeleteSelected();
+                  }
+                }}
+                disabled={deleting || marking}
+              >
+                {deleting ? (
+                  <Loader2 className="size-3.5 animate-spin" />
+                ) : (
+                  <Trash2 className="size-3.5" />
+                )}
+                Delete selected
+              </Button>
+            </>
+          ) : (
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              className="cursor-pointer gap-1.5 text-muted-foreground"
+              onClick={onSelectAll}
+            >
+              <Plus className="size-3.5" />
+              Select all
+            </Button>
+          )}
+        </div>
+      ) : (
+        <span className="ml-auto font-mono text-xs text-muted-foreground">
+          latest 50 · live
+        </span>
+      )}
+    </header>
+  );
+}
+
+// Render the unread badge count, collapsing large numbers like the tab bar does.
+function unreadBadgeCount(n: number) {
+  return n > 99 ? 99 : n;
+}
+
+type EmailStatus = {
+  configured: boolean;
+  from: string;
+  usingTestSender: boolean;
+} | null;
+
+/**
+ * Live Resend health + domain-verification checklist for the owner. Reads the
+ * emailStatus query (which reflects the deployment's RESEND_API_KEY / RESEND_FROM)
+ * so the owner can see at a glance whether dashboard replies AND login OTPs will
+ * actually be emailed out, and what's left to do for reliable delivery. Both the
+ * reply feature and the email-OTP login share this same RESEND config.
+ */
+function ResendChecklist({ status }: { status: EmailStatus }) {
+  if (status === undefined) {
+    // Still loading — render nothing intrusive.
+    return null;
+  }
+  const steps: { label: string; done: boolean }[] = [
+    {
+      label: "RESEND_API_KEY configured",
+      done: status?.configured ?? false,
+    },
+    {
+      label: "Verified sending domain (not the resend.dev test sender)",
+      done: status ? !status.usingTestSender : false,
+    },
+    {
+      label: "Applies to login OTPs too (same RESEND_FROM)",
+      done: status ? !status.usingTestSender : false,
+    },
+  ];
+  const allDone = steps.every((s) => s.done);
+
+  return (
+    <div className="mt-4 rounded-xl border border-border/70 bg-background/40 p-4">
+      <div className="flex items-center gap-2">
+        <Mail className="size-4 text-primary" />
+        <h3 className="text-sm font-semibold tracking-tight">Email (replies &amp; login OTPs)</h3>
+        <span
+          className={cn(
+            "ml-auto inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wide",
+            status?.configured
+              ? "border border-emerald-500/30 bg-emerald-500/10 text-emerald-500"
+              : "border border-destructive/30 bg-destructive/10 text-destructive",
+          )}
+        >
+          {status?.configured ? "Active" : "Not configured"}
+        </span>
+      </div>
+
+      <ul className="mt-3 flex flex-col gap-1.5">
+        {steps.map((s) => (
+          <li key={s.label} className="flex items-center gap-2 text-xs">
+            <span
+              className={cn(
+                "inline-flex size-4 shrink-0 items-center justify-center rounded-full text-[10px]",
+                s.done
+                  ? "bg-emerald-500/15 text-emerald-500"
+                  : "bg-destructive/15 text-destructive",
+              )}
+            >
+              {s.done ? "✓" : "!"}
+            </span>
+            <span className={s.done ? "text-muted-foreground" : "text-foreground"}>
+              {s.label}
+            </span>
+          </li>
+        ))}
+      </ul>
+
+      <p className="mt-3 font-mono text-[11px] leading-relaxed text-muted-foreground">
+        {status
+          ? `Sending as: ${status.from}`
+          : "Sending as: Sahil Shedge <onboarding@resend.dev>"}
+      </p>
+
+      {!allDone ? (
+        <div className="mt-3 rounded-lg border border-primary/20 bg-primary/5 p-3">
+          <p className="text-[11px] leading-relaxed text-muted-foreground">
+            {!status?.configured ? (
+              <>
+                Set <span className="font-mono text-foreground">RESEND_API_KEY</span> in
+                your Convex deployment to enable emailing replies. Replies are still
+                saved in this inbox.
+              </>
+            ) : (
+              <>
+                You're on Resend's test sender, so replies and login OTPs may land in
+                spam or be blocked. Verify a domain at{" "}
+                <span className="font-mono text-foreground">resend.com/domains</span> and
+                update <span className="font-mono text-foreground">RESEND_FROM</span> to a
+                sender on that domain for reliable delivery. The same sender is used for
+                both dashboard replies and the email-OTP login.
+              </>
+            )}
+          </p>
+        </div>
+      ) : (
+        <p className="mt-3 text-[11px] leading-relaxed text-emerald-500">
+          ✓ Fully configured — dashboard replies and login OTPs will be delivered.
+        </p>
+      )}
+    </div>
+  );
+}
+
 /** One expandable message thread with an inline reply composer. */
-function MessageThread({ msg }: { msg: Doc<"contactMessages"> }) {
+function MessageThread({
+  msg,
+  selected,
+  onToggleSelect,
+}: {
+  msg: Doc<"contactMessages">;
+  selected: boolean;
+  onToggleSelect: (next: boolean) => void;
+}) {
   const [open, setOpen] = useState(false);
   const [replyText, setReplyText] = useState("");
   const [sending, setSending] = useState(false);
   const markAsRead = useMutation(api.messages.markAsRead);
   const replyToMessage = useAction(api.sendReply.replyToMessage);
+  const deleteMessage = useMutation(api.messages.deleteMessage);
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDelete = async () => {
+    setDeleting(true);
+    try {
+      await deleteMessage({ id: msg._id });
+      toast.success("Message deleted.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to delete.");
+      setDeleting(false);
+    }
+  };
 
   const toggle = () => {
     const next = !open;
@@ -91,57 +345,103 @@ function MessageThread({ msg }: { msg: Doc<"contactMessages"> }) {
 
   return (
     <li className="py-4">
-      <button
-        type="button"
-        onClick={toggle}
-        aria-expanded={open}
-        className="flex w-full cursor-pointer flex-wrap items-center justify-between gap-2 text-left"
-      >
-        <span className="flex min-w-0 items-center gap-2.5">
-          {!msg.read ? (
-            <span className="size-2 shrink-0 rounded-full bg-primary" />
-          ) : (
-            <MailOpen className="size-3.5 shrink-0 text-muted-foreground/50" />
-          )}
-          <span
-            className={cn(
-              "truncate text-sm tracking-tight",
-              msg.read ? "text-foreground/80" : "font-semibold text-foreground",
-            )}
-          >
-            {msg.name}
-          </span>
-          {msg.repliedAt ? (
-            <span className="shrink-0 rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 font-mono text-[10px] uppercase tracking-wide text-primary">
-              Replied
-            </span>
-          ) : null}
-        </span>
-        <span className="flex shrink-0 items-center gap-2">
-          <span className="text-xs text-muted-foreground">
-            {formatDate(msg._creationTime)}
-          </span>
-          <ChevronDown
-            className={cn(
-              "size-4 text-muted-foreground transition-transform duration-200",
-              open && "rotate-180",
-            )}
-          />
-        </span>
-      </button>
+      <div className="flex w-full items-start gap-2">
+        <input
+          type="checkbox"
+          checked={selected}
+          onChange={(e) => onToggleSelect(e.target.checked)}
+          aria-label={`Select message from ${msg.name}`}
+          className="mt-1 size-4 shrink-0 cursor-pointer rounded border-border accent-primary"
+        />
 
-      {open ? (
-        <div className="mt-3 flex flex-col gap-4 border-l-2 border-border/60 pl-4 sm:pl-5">
-          <a
-            href={`mailto:${msg.email}`}
-            className="inline-flex w-fit items-center gap-1.5 text-xs font-medium text-primary hover:underline"
+        {!open ? (
+          <button
+            type="button"
+            onClick={toggle}
+            aria-expanded={open}
+            className="flex w-full cursor-pointer flex-wrap items-center justify-between gap-2 text-left"
           >
-            <Mail className="size-3" />
-            {msg.email}
-          </a>
-          <p className="whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">
+            <span className="flex min-w-0 items-center gap-2.5">
+              {!msg.read ? (
+              <span className="size-2 shrink-0 rounded-full bg-primary" />
+            ) : (
+              <MailOpen className="size-3.5 shrink-0 text-muted-foreground/50" />
+            )}
+            <span
+              className={cn(
+                "shrink-0 text-sm tracking-tight",
+                msg.read ? "text-foreground/80" : "font-semibold text-foreground",
+              )}
+            >
+              {msg.name}
+            </span>
+            <span className="hidden truncate text-sm text-muted-foreground/70 sm:inline">
+              — {msg.message.replace(/\s+/g, " ").trim().slice(0, 80)}
+              {msg.message.length > 80 ? "…" : ""}
+            </span>
+            {msg.repliedAt ? (
+              <span className="shrink-0 rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 font-mono text-[10px] uppercase tracking-wide text-primary">
+                Replied
+              </span>
+            ) : null}
+          </span>
+          <span className="flex shrink-0 items-center gap-2">
+            <span className="text-xs text-muted-foreground">
+              {formatDate(msg._creationTime)}
+            </span>
+            <ChevronDown
+              className={cn(
+                "size-4 text-muted-foreground transition-transform duration-200",
+                open && "rotate-180",
+              )}
+            />
+          </span>
+        </button>
+      ) : (
+        <div className="mt-0 flex w-full flex-col gap-4 border-l-2 border-border/60 pl-4 sm:pl-5">
+          {/* Email-style header — From / address / date, like a mail client.
+              Clicking the row collapses the thread again. */}
+          <button
+            type="button"
+            onClick={toggle}
+            aria-expanded={open}
+            className="flex w-full cursor-pointer flex-wrap items-end justify-between gap-2 text-left"
+          >
+            <div className="flex min-w-0 items-center gap-2">
+              {!msg.read ? (
+                <span className="size-2 shrink-0 rounded-full bg-primary" />
+              ) : (
+                <MailOpen className="size-3.5 shrink-0 text-muted-foreground/50" />
+              )}
+              <span className="truncate text-sm font-semibold text-foreground">
+                {msg.name}
+              </span>
+              <a
+                href={`mailto:${msg.email}`}
+                onClick={(e) => e.stopPropagation()}
+                className="truncate text-xs text-primary hover:underline"
+              >
+                &lt;{msg.email}&gt;
+              </a>
+            </div>
+            <span className="flex shrink-0 items-center gap-2">
+              <span className="text-xs text-muted-foreground">
+                {formatDate(msg._creationTime)}
+              </span>
+              <ChevronDown
+                className={cn(
+                  "size-4 text-muted-foreground transition-transform duration-200",
+                  open && "rotate-180",
+                )}
+              />
+            </span>
+          </button>
+
+          {/* The message body. */}
+          <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground/90">
             {msg.message}
           </p>
+
           {msg.reply ? (
             <div className="rounded-lg border border-primary/20 bg-primary/5 p-3">
               <p className="mb-1 font-mono text-[10px] uppercase tracking-widest text-primary">
@@ -152,24 +452,47 @@ function MessageThread({ msg }: { msg: Doc<"contactMessages"> }) {
               </p>
             </div>
           ) : null}
+
+          {/* Reply composer — full-width, sits below the message like a reply box. */}
           <div className="flex flex-col gap-2">
             <textarea
               value={replyText}
               onChange={(e) => setReplyText(e.target.value)}
               placeholder={`Reply to ${msg.name}…`}
-              rows={3}
+              rows={6}
               className="w-full resize-y rounded-lg border border-border bg-card px-3 py-2 text-sm leading-relaxed text-foreground outline-none transition-colors placeholder:text-muted-foreground/60 focus:border-primary/40 disabled:opacity-60"
               disabled={sending}
             />
-            <div className="flex items-center justify-between gap-2">
-              <a
-                href={`mailto:${msg.email}?subject=${encodeURIComponent(
-                  "Re: your message",
-                )}&body=${encodeURIComponent(replyText)}`}
-                className="text-xs text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
-              >
-                or open in your email app
-              </a>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="flex items-center gap-3">
+                <a
+                  href={`mailto:${msg.email}?subject=${encodeURIComponent(
+                    "Re: your message",
+                  )}&body=${encodeURIComponent(replyText)}`}
+                  className="text-xs text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+                >
+                  or open in your email app
+                </a>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  className="cursor-pointer gap-1.5 text-destructive hover:text-destructive"
+                  onClick={() => {
+                    if (window.confirm(`Delete this message from ${msg.name}?`)) {
+                      void handleDelete();
+                    }
+                  }}
+                  disabled={deleting}
+                >
+                  {deleting ? (
+                    <Loader2 className="size-3.5 animate-spin" />
+                  ) : (
+                    <Trash2 className="size-3.5" />
+                  )}
+                  Delete
+                </Button>
+              </div>
               <Button
                 type="button"
                 size="sm"
@@ -192,7 +515,8 @@ function MessageThread({ msg }: { msg: Doc<"contactMessages"> }) {
             </div>
           </div>
         </div>
-      ) : null}
+        )}
+      </div>
     </li>
   );
 }
@@ -470,7 +794,7 @@ function WorkTab() {
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">
-          {items.length} project{items.length === 1 ? "" : "s"} · order top→bottom
+          {items.length} project{items.length === 1 ? "" : "s"} · order top→bottom · changes apply to the live site only after you save each card
         </p>
         <Button type="button" size="sm" variant="outline" className="cursor-pointer gap-2" onClick={addRow}>
           <Plus className="size-4" /> Add project
@@ -743,10 +1067,11 @@ function ContentTab() {
         <Textarea value={rotating} onChange={(e) => setRotating(e.target.value)} rows={5} placeholder="Consistent&#10;Curious" />
         <Label className="mt-3 text-xs">Availability badge</Label>
         <Input value={availabilityVal} onChange={(e) => setAvailabilityVal(e.target.value)} placeholder="Open to internships & full-time roles" />
-        <div className="mt-3 flex justify-end">
+        <div className="mt-3 flex flex-col items-end gap-1.5">
           <Button type="button" size="sm" className="cursor-pointer gap-2" onClick={saveHero}>
             <Send className="size-3.5" /> Save hero
           </Button>
+          <p className="text-[11px] text-muted-foreground">Changes apply to the live site only after you save.</p>
         </div>
       </Card>
 
@@ -755,10 +1080,11 @@ function ContentTab() {
         <Textarea value={aboutVal} onChange={(e) => setAboutVal(e.target.value)} rows={4} />
         <Label className="mt-3 text-xs">Objective</Label>
         <Textarea value={objectiveVal} onChange={(e) => setObjectiveVal(e.target.value)} rows={4} />
-        <div className="mt-3 flex justify-end">
+        <div className="mt-3 flex flex-col items-end gap-1.5">
           <Button type="button" size="sm" className="cursor-pointer gap-2" onClick={saveAbout}>
             <Send className="size-3.5" /> Save about
           </Button>
+          <p className="text-[11px] text-muted-foreground">Changes apply to the live site only after you save.</p>
         </div>
       </Card>
 
@@ -780,9 +1106,12 @@ function ContentTab() {
             </div>
           ))}
         </div>
-        <div className="mt-3 flex items-center justify-between">
-          <Button type="button" size="sm" variant="outline" className="cursor-pointer gap-2" onClick={addSocial}><Plus className="size-4" /> Add link</Button>
-          <Button type="button" size="sm" className="cursor-pointer gap-2" onClick={saveSocials}><Send className="size-3.5" /> Save socials</Button>
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+          <p className="text-[11px] text-muted-foreground">Changes apply to the live site only after you save.</p>
+          <div className="flex items-center gap-2">
+            <Button type="button" size="sm" variant="outline" className="cursor-pointer gap-2" onClick={addSocial}><Plus className="size-4" /> Add link</Button>
+            <Button type="button" size="sm" className="cursor-pointer gap-2" onClick={saveSocials}><Send className="size-3.5" /> Save socials</Button>
+          </div>
         </div>
       </Card>
     </div>
@@ -924,7 +1253,7 @@ function ExperienceTab() {
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">
-          {items.length} entr{items.length === 1 ? "y" : "ies"} · order top→bottom
+          {items.length} entr{items.length === 1 ? "y" : "ies"} · order top→bottom · changes apply to the live site only after you save each entry
         </p>
         <Button type="button" size="sm" variant="outline" className="cursor-pointer gap-2" onClick={addRow}>
           <Plus className="size-4" /> Add entry
@@ -996,18 +1325,20 @@ function ExperienceTab() {
 
 // ── Skills tab ───────────────────────────────────────────────────────────────────
 
-type SkillGroup = { label: string; items: string[] };
+type SkillItem = { name: string; icon?: string };
+type SkillGroup = { label: string; items: SkillItem[] };
 
 /**
  * A single skill chip — mirrors the brand-logged chips on the public site (uses the
- * same `brandFor` lookup so icons/colors match exactly). Falls back to a plain
- * monochrome chip when there's no brand logo mapped for the skill name.
+ * same `brandFor` lookup so icons/colors match exactly). `key` is the brand-lookup
+ * key (the chosen icon if set, else the skill name), so the preview reflects the
+ * owner's selection. Falls back to a plain monochrome chip when no logo is mapped.
  */
-function SkillChip({ name }: { name: string }) {
-  const brand = brandFor(name);
-  // Deterministic, id-safe suffix derived from the skill name so re-renders don't
-  // churn the unique mask id (the public Skills component does the same per index).
-  const maskId = `vscode-dash-${name.replace(/[^a-zA-Z0-9]/g, "")}`;
+function SkillChip({ name, iconKey }: { name: string; iconKey: string }) {
+  const brand = brandFor(iconKey);
+  // Deterministic, id-safe suffix derived from the key so re-renders don't churn the
+  // unique mask id (the public Skills component does the same per index).
+  const maskId = `vscode-dash-${iconKey.replace(/[^a-zA-Z0-9]/g, "")}`;
   const rawSvg =
     brand?.type === "raw" ? brand.svg.replace("vscode-mask", maskId) : undefined;
   return (
@@ -1035,7 +1366,7 @@ function SkillChip({ name }: { name: string }) {
  * portfolio site — grouped chips with brand logos, plus the footer note. This is
  * exactly the data the public `Skills` component consumes (live Convex row →
  * fallback to static src/data/portfolio.ts), so the owner sees the real fetched
- * content instead of raw comma-separated textareas.
+ * content instead of raw editor inputs.
  */
 function SkillsPreview({ groups, note }: { groups: SkillGroup[]; note: string }) {
   if (groups.length === 0) {
@@ -1060,7 +1391,11 @@ function SkillsPreview({ groups, note }: { groups: SkillGroup[]; note: string })
           </div>
           <div className="flex flex-wrap gap-2">
             {g.items.map((item, j) => (
-              <SkillChip key={`${g.label}-${j}`} name={item} />
+              <SkillChip
+                key={`${g.label}-${j}`}
+                name={item.name}
+                iconKey={item.icon?.trim() || item.name}
+              />
             ))}
           </div>
         </div>
@@ -1084,47 +1419,120 @@ function SkillsTab() {
   // src/data/portfolio.ts. This is the "details fetched from the portfolio site".
   const liveGroups = data?.skills?.groups ?? [];
   const liveNote = data?.skills?.note ?? "";
-  const sourceGroups =
+  const liveIntro = data?.skills?.intro ?? null;
+  const sourceGroups: SkillGroup[] =
     liveGroups.length > 0
-      ? liveGroups.map((g) => ({ label: g.label, items: [...g.items] }))
-      : staticSkills.groups.map((g) => ({ label: g.label, items: [...g.items] }));
+      ? liveGroups.map((g) => ({
+          label: g.label,
+          items: g.items.map((it) => ({ name: it.name, icon: it.icon })),
+        }))
+      : staticSkills.groups.map((g) => ({
+          label: g.label,
+          items: g.items.map((it) => ({ name: it.name, icon: it.icon })),
+        }));
   const sourceNote = liveNote || staticSkills.note;
 
-  // Editable copy (comma-separated textareas) — seeded from the same source so the
-  // owner edits what they actually see, not a blank slate.
+  // Editable copy — seeded from the same source so the owner edits what they
+  // actually see, not a blank slate.
   const [groups, setGroups] = useState<SkillGroup[]>(sourceGroups);
   const [note, setNote] = useState(sourceNote);
+  const [intro, setIntro] = useState(liveIntro ?? "");
+  // Marquee layout (rows / speed / direction). null = use public-site defaults.
+  const DEFAULT_MARQUEE = { rows: 2, baseSpeed: 70, alternateDirection: true };
+  const liveMarquee = data?.skills?.marquee ?? null;
+  const [marquee, setMarquee] = useState<{
+    rows: number;
+    baseSpeed: number;
+    alternateDirection: boolean;
+  } | null>(liveMarquee ?? DEFAULT_MARQUEE);
   const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     const live = data?.skills?.groups ?? [];
     setGroups(
       live.length > 0
-        ? live.map((g) => ({ label: g.label, items: [...g.items] }))
-        : staticSkills.groups.map((g) => ({ label: g.label, items: [...g.items] })),
+        ? live.map((g) => ({
+            label: g.label,
+            items: g.items.map((it) => ({ name: it.name, icon: it.icon })),
+          }))
+        : staticSkills.groups.map((g) => ({
+            label: g.label,
+            items: g.items.map((it) => ({ name: it.name, icon: it.icon })),
+          })),
     );
     setNote(data?.skills?.note || staticSkills.note);
+    setIntro(data?.skills?.intro ?? "");
+    setMarquee(data?.skills?.marquee ?? DEFAULT_MARQUEE);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data, reloadKey]);
 
   const updateGroup = (i: number, patch: Partial<SkillGroup>) =>
     setGroups((prev) => prev.map((g, idx) => (idx === i ? { ...g, ...patch } : g)));
 
-  const setGroupItems = (i: number, text: string) =>
+  const updateItem = (gi: number, ii: number, patch: Partial<SkillItem>) =>
     setGroups((prev) =>
       prev.map((g, idx) =>
-        idx === i ? { ...g, items: text.split(",").map((t) => t.trim()).filter(Boolean) } : g,
+        idx === gi
+          ? { ...g, items: g.items.map((it, jdx) => (jdx === ii ? { ...it, ...patch } : it)) }
+          : g,
+      ),
+    );
+
+  const addItem = (i: number) =>
+    setGroups((prev) =>
+      prev.map((g, idx) => (idx === i ? { ...g, items: [...g.items, { name: "" }] } : g)),
+    );
+  const removeItem = (gi: number, ii: number) =>
+    setGroups((prev) =>
+      prev.map((g, idx) =>
+        idx === gi ? { ...g, items: g.items.filter((_, jdx) => jdx !== ii) } : g,
       ),
     );
 
   const addGroup = () => setGroups((prev) => [...prev, { label: "", items: [] }]);
   const removeGroup = (i: number) => setGroups((prev) => prev.filter((_, idx) => idx !== i));
 
+  // Reorder a group within the list (order = array position on save).
+  const moveGroup = (i: number, dir: "up" | "down") => {
+    const j = dir === "up" ? i - 1 : i + 1;
+    if (j < 0 || j >= groups.length) return;
+    setGroups((prev) => {
+      const next = [...prev];
+      [next[i], next[j]] = [next[j], next[i]];
+      return next;
+    });
+  };
+
+  // Reorder a skill within its group (order = array position on save).
+  const moveItem = (gi: number, ii: number, dir: "up" | "down") => {
+    const j = dir === "up" ? ii - 1 : ii + 1;
+    if (j < 0 || j >= groups[gi].items.length) return;
+    setGroups((prev) =>
+      prev.map((g, idx) => {
+        if (idx !== gi) return g;
+        const items = [...g.items];
+        [items[ii], items[j]] = [items[j], items[ii]];
+        return { ...g, items };
+      }),
+    );
+  };
+
   const save = async () => {
     try {
       await updateSkills({
-        groups: groups.map((g) => ({ label: g.label, items: g.items })),
+        groups: groups.map((g) => ({
+          label: g.label,
+          items: g.items.map((it) => ({ name: it.name, icon: it.icon })),
+        })),
         note,
+        intro: intro || undefined,
+        marquee: marquee
+          ? {
+              rows: marquee.rows,
+              baseSpeed: marquee.baseSpeed,
+              alternateDirection: marquee.alternateDirection,
+            }
+          : undefined,
       });
       toast.success("Skills saved.");
       setReloadKey((k) => k + 1);
@@ -1147,10 +1555,27 @@ function SkillsTab() {
         <SkillsPreview groups={groups} note={note} />
       </Card>
 
+      {/* Intro subtitle — editable, shown under the section header */}
+      <Card title="Intro line">
+        <p className="mb-3 text-[11px] text-muted-foreground">
+          The mono subtitle under the "Skills &amp; Stack" heading. Leave blank to use the
+          default copy shown on the live site.
+        </p>
+        <Label className="text-xs">Intro subtitle</Label>
+        <Textarea
+          value={intro}
+          onChange={(e) => setIntro(e.target.value)}
+          rows={2}
+          placeholder="// Languages, frameworks, databases and tooling I reach for when building."
+          className="mt-1 font-mono text-[11px]"
+        />
+      </Card>
+
       {/* Editor — same data, editable as labelled groups of chips */}
       <Card title="Edit groups">
         <p className="mb-3 text-[11px] text-muted-foreground">
-          Each group becomes one labelled block of chips in the scrolling marquee. Items are comma-separated.
+          Each group becomes one labelled block of chips in the scrolling marquee. Add a
+          skill per row and pick its logo from the dropdown (or leave it blank for a plain chip).
         </p>
         <div className="flex flex-col gap-3">
           {groups.map((g, i) => (
@@ -1160,16 +1585,39 @@ function SkillsTab() {
                   <Label className="text-[11px]">Group label</Label>
                   <Input value={g.label} onChange={(e) => updateGroup(i, { label: e.target.value })} placeholder="Programming Languages" />
                 </div>
-                <Button type="button" size="icon-sm" variant="ghost" className="cursor-pointer text-destructive hover:text-destructive" onClick={() => removeGroup(i)} aria-label="Remove group"><Trash2 className="size-4" /></Button>
+                <div className="flex items-center gap-1">
+                  <Button type="button" size="icon-sm" variant="ghost" className="cursor-pointer" disabled={i === 0} onClick={() => moveGroup(i, "up")} aria-label="Move group up"><ArrowUp className="size-4" /></Button>
+                  <Button type="button" size="icon-sm" variant="ghost" className="cursor-pointer" disabled={i === groups.length - 1} onClick={() => moveGroup(i, "down")} aria-label="Move group down"><ArrowDown className="size-4" /></Button>
+                  <Button type="button" size="icon-sm" variant="ghost" className="cursor-pointer text-destructive hover:text-destructive" onClick={() => removeGroup(i)} aria-label="Remove group"><Trash2 className="size-4" /></Button>
+                </div>
               </div>
-              <div className="mt-2">
-                <Label className="text-[11px]">Items (comma-separated)</Label>
-                <Textarea
-                  value={g.items.join(", ")}
-                  onChange={(e) => setGroupItems(i, e.target.value)}
-                  rows={2}
-                  placeholder="C, C++, Python, Java"
-                />
+              <div className="mt-3 flex flex-col gap-2">
+                <Label className="text-[11px]">Skills (name + logo)</Label>
+                {g.items.map((item, j) => (
+                  <div key={j} className="flex items-center gap-2">
+                    <Input
+                      value={item.name}
+                      onChange={(e) => updateItem(i, j, { name: e.target.value })}
+                      placeholder="Skill name (e.g. Docker)"
+                      className="flex-1"
+                    />
+                    <select
+                      value={item.icon ?? "none"}
+                      onChange={(e) => updateItem(i, j, { icon: e.target.value === "none" ? undefined : e.target.value })}
+                      className="h-9 rounded-lg border border-border bg-card px-2 text-xs text-foreground outline-none focus:border-primary/40"
+                      aria-label={`Logo for ${item.name || "skill"}`}
+                    >
+                      <option value="none">No logo</option>
+                      {ICON_KEYS.map((key) => (
+                        <option key={key} value={key}>{key}</option>
+                      ))}
+                    </select>
+                    <Button type="button" size="icon-sm" variant="ghost" className="cursor-pointer" disabled={j === 0} onClick={() => moveItem(i, j, "up")} aria-label="Move skill up"><ArrowUp className="size-4" /></Button>
+                    <Button type="button" size="icon-sm" variant="ghost" className="cursor-pointer" disabled={j === g.items.length - 1} onClick={() => moveItem(i, j, "down")} aria-label="Move skill down"><ArrowDown className="size-4" /></Button>
+                    <Button type="button" size="icon-sm" variant="ghost" className="cursor-pointer text-destructive hover:text-destructive" onClick={() => removeItem(i, j)} aria-label="Remove skill"><Trash2 className="size-4" /></Button>
+                  </div>
+                ))}
+                <Button type="button" size="sm" variant="ghost" className="mt-1 w-fit cursor-pointer gap-1.5 text-[11px]" onClick={() => addItem(i)}><Plus className="size-3.5" /> Add skill</Button>
               </div>
             </div>
           ))}
@@ -1179,15 +1627,66 @@ function SkillsTab() {
         </div>
       </Card>
 
+      <Card title="Marquee layout">
+        <p className="mb-3 text-[11px] text-muted-foreground">
+          Control how the scrolling Skills &amp; Stack rows look on the public site.
+          Rows are filled round-robin from your skills, each row scrolls at its own
+          speed, and odd rows reverse when "alternate direction" is on.
+        </p>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <div>
+            <Label className="text-[11px]">Rows ({marquee?.rows ?? 2})</Label>
+            <input
+              type="range"
+              min={1}
+              max={6}
+              step={1}
+              value={marquee?.rows ?? 2}
+              onChange={(e) => setMarquee((m) => ({ ...(m ?? DEFAULT_MARQUEE), rows: Number(e.target.value) }))}
+              className="mt-2 w-full accent-primary"
+              aria-label="Number of marquee rows"
+            />
+          </div>
+          <div>
+            <Label className="text-[11px]">Speed ({marquee?.baseSpeed ?? 70}s / loop)</Label>
+            <input
+              type="range"
+              min={10}
+              max={240}
+              step={5}
+              value={marquee?.baseSpeed ?? 70}
+              onChange={(e) => setMarquee((m) => ({ ...(m ?? DEFAULT_MARQUEE), baseSpeed: Number(e.target.value) }))}
+              className="mt-2 w-full accent-primary"
+              aria-label="Marquee loop speed"
+            />
+          </div>
+          <div className="flex flex-col justify-center gap-2">
+            <Label className="text-[11px]">Direction</Label>
+            <label className="flex items-center gap-2 text-xs text-foreground">
+              <input
+                type="checkbox"
+                checked={marquee?.alternateDirection ?? true}
+                onChange={(e) => setMarquee((m) => ({ ...(m ?? DEFAULT_MARQUEE), alternateDirection: e.target.checked }))}
+                className="size-4 rounded border-border accent-primary"
+              />
+              Alternate direction per row
+            </label>
+          </div>
+        </div>
+      </Card>
+
       <Card title="Footer note">
         <Label className="text-xs">Note shown under the marquee</Label>
         <Input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Currently exploring realtime apps, AI tooling and computer vision." />
       </Card>
 
-      <div className="flex justify-end">
+      <div className="flex flex-col items-end gap-1.5">
         <Button type="button" size="sm" className="cursor-pointer gap-2" onClick={save}>
           <Send className="size-3.5" /> Save skills
         </Button>
+        <p className="text-[11px] text-muted-foreground">
+          Changes apply to the live site only after you save.
+        </p>
       </div>
     </div>
   );
@@ -1460,6 +1959,9 @@ function BackgroundTab() {
 
   return (
     <div className="flex flex-col gap-6">
+      <p className="text-[11px] text-muted-foreground">
+        Changes apply to the live site only after you press Save on a card.
+      </p>
       {/* Background mode + live preview side-by-side */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <Card title="Background mode">
@@ -1641,6 +2143,11 @@ function TerminalTab() {
   const [descriptions, setDescriptions] = useState<Record<string, string>>(
     terminal.commandDescriptions ?? {},
   );
+  // Custom command → output lines[]. When a command has an entry here, the public
+  // terminal shows these lines instead of its built-in logic.
+  const [responses, setResponses] = useState<Record<string, string[]>>(
+    terminal.commandResponses ?? {},
+  );
   const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
@@ -1648,6 +2155,7 @@ function TerminalTab() {
     setBootLines(terminal.bootLines.length ? terminal.bootLines : DEFAULT_BOOT_LINES.map((l) => ({ ...l })));
     setCommands(terminal.defaultCommands.length ? terminal.defaultCommands.join(", ") : DEFAULT_CHIPS);
     setDescriptions(terminal.commandDescriptions ?? {});
+    setResponses(terminal.commandResponses ?? {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [terminal, reloadKey]);
 
@@ -1658,6 +2166,21 @@ function TerminalTab() {
     descriptions[chip] ?? DEFAULT_COMMAND_DESCRIPTIONS[chip] ?? "";
   const setDescFor = (chip: string, text: string) =>
     setDescriptions((prev) => ({ ...prev, [chip]: text }));
+
+  // Custom command → output lines. Each command (from the chip list) can have its
+  // own answer; when set, the public terminal shows these lines instead of its
+  // built-in logic. Only commands with non-empty entries are kept on save.
+  const respFor = (cmd: string): string =>
+    (responses[cmd] ?? []).join("\n");
+  const setRespFor = (cmd: string, text: string) =>
+    setResponses((prev) => {
+      const lines = text.split("\n").map((l) => l.replace(/\r$/, ""));
+      if (lines.length === 0 || (lines.length === 1 && !lines[0].trim())) {
+        const { [cmd]: _drop, ...rest } = prev;
+        return rest;
+      }
+      return { ...prev, [cmd]: lines };
+    });
 
   const updateLine = (i: number, patch: Partial<BootLineEditor>) =>
     setBootLines((prev) => prev.map((l, idx) => (idx === i ? { ...l, ...patch } : l)));
@@ -1686,6 +2209,7 @@ function TerminalTab() {
           .map((c) => c.trim())
           .filter(Boolean),
         commandDescriptions: descriptions,
+        commandResponses: responses,
       });
       toast.success("Terminal content saved.");
       setReloadKey((k) => k + 1);
@@ -1732,6 +2256,38 @@ function TerminalTab() {
         </div>
       </Card>
 
+      <Card title="Custom command responses (optional override)">
+        <p className="mb-3 text-[11px] text-muted-foreground">
+          Set a custom answer for any command. When a command has an entry here, the
+          terminal shows these exact lines <span className="font-mono">instead of</span> its
+          built-in output — so you can fully rewrite <span className="font-mono">whoami</span>,
+          <span className="font-mono">projects</span>, <span className="font-mono">skills</span>, etc.
+          Leave a command blank to keep its live, data-driven default. One line per row.
+        </p>
+        <div className="flex flex-col gap-3">
+          {chipList.length === 0 ? (
+            <p className="text-[11px] text-muted-foreground">
+              Add chips above (comma-separated) to set a custom response for each.
+            </p>
+          ) : (
+            chipList.map((chip) => (
+              <div key={chip} className="rounded-lg border border-border/60 bg-background/40 p-3">
+                <Label className="text-[11px]">
+                  <span className="font-mono text-foreground">{chip}</span>
+                </Label>
+                <Textarea
+                  value={respFor(chip)}
+                  onChange={(e) => setRespFor(chip, e.target.value)}
+                  rows={3}
+                  placeholder={`Custom lines for '${chip}' — one per row. Blank = use built-in output.`}
+                  className="mt-1 font-mono text-[11px]"
+                />
+              </div>
+            ))
+          )}
+        </div>
+      </Card>
+
       <Card title="Boot text (shown while the terminal wakes up)">
         <p className="mb-2 text-[11px] text-muted-foreground">
           Each line has a <span className="font-mono">type</span> that controls its color (system / output / accent / loading / header / input / error / link).
@@ -1762,9 +2318,10 @@ function TerminalTab() {
           ))}
         </div>
         <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-          <Button type="button" size="sm" variant="outline" className="cursor-pointer gap-2" onClick={addLine}><Plus className="size-4" /> Add line</Button>
+          <p className="text-[11px] text-muted-foreground">Changes apply to the live site only after you save.</p>
           <div className="flex items-center gap-2">
-            <Button type="button" size="sm" variant="ghost" className="cursor-pointer gap-2" onClick={() => { setPrompt(DEFAULT_PROMPT); setBootLines(DEFAULT_BOOT_LINES.map((l) => ({ ...l }))); setCommands(DEFAULT_CHIPS); toast.info("Reset to defaults — press Save to apply."); }}><RotateCcw className="size-3.5" /> Reset</Button>
+            <Button type="button" size="sm" variant="outline" className="cursor-pointer gap-2" onClick={addLine}><Plus className="size-4" /> Add line</Button>
+            <Button type="button" size="sm" variant="ghost" className="cursor-pointer gap-2" onClick={() => { setPrompt(DEFAULT_PROMPT); setBootLines(DEFAULT_BOOT_LINES.map((l) => ({ ...l }))); setCommands(DEFAULT_CHIPS); setDescriptions({}); setResponses({}); toast.info("Reset to defaults — press Save to apply."); }}><RotateCcw className="size-3.5" /> Reset</Button>
             <Button type="button" size="sm" className="cursor-pointer gap-2" onClick={save}><Send className="size-3.5" /> Save terminal</Button>
           </div>
         </div>
@@ -2039,6 +2596,51 @@ function DashboardShell() {
     if (typeof window !== "undefined") window.localStorage.setItem("dashboard-tab", t);
   };
   const messages = useQuery(api.messages.listMessages);
+  const deleteMessages = useMutation(api.messages.deleteMessages);
+  const markMessages = useMutation(api.messages.markMessages);
+  const emailStatus = useQuery(api.messages.emailStatus);
+  // Bulk-select state for the inbox (checkboxes + bulk actions).
+  const [selectedIds, setSelectedIds] = useState<Set<Id<"contactMessages">>>(
+    new Set(),
+  );
+  const [deletingSelected, setDeletingSelected] = useState(false);
+  const [marking, setMarking] = useState(false);
+
+  const handleDeleteSelected = async () => {
+    if (selectedIds.size === 0) return;
+    setDeletingSelected(true);
+    try {
+      const count = await deleteMessages({
+        ids: Array.from(selectedIds),
+      });
+      setSelectedIds(new Set());
+      toast.success(
+        count === 1 ? "1 message deleted." : `${count} messages deleted.`,
+      );
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to delete.");
+    } finally {
+      setDeletingSelected(false);
+    }
+  };
+
+  const handleMarkSelected = async (read: boolean) => {
+    if (selectedIds.size === 0) return;
+    setMarking(true);
+    try {
+      const count = await markMessages({ ids: Array.from(selectedIds), read });
+      setSelectedIds(new Set());
+      toast.success(
+        read
+          ? count === 1 ? "1 message marked read." : `${count} messages marked read.`
+          : count === 1 ? "1 message marked unread." : `${count} messages marked unread.`,
+      );
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to update.");
+    } finally {
+      setMarking(false);
+    }
+  };
 
   const handleSignOut = async () => {
     await signOut();
@@ -2070,16 +2672,8 @@ function DashboardShell() {
               <ShieldCheck className="size-4 text-primary" />
               Owner workspace — only you can see this
             </p>
-            <h1 className="mt-1 flex items-center gap-3 text-3xl font-bold tracking-tight">
+            <h1 className="mt-1 text-3xl font-bold tracking-tight">
               Dashboard
-              {messages !== null && unreadCount > 0 ? (
-                <span
-                  title={`${unreadCount} unread message${unreadCount === 1 ? "" : "s"}`}
-                  className="inline-flex size-6 items-center justify-center rounded-full bg-destructive px-1.5 font-mono text-xs font-bold text-white"
-                >
-                  {unreadCount > 99 ? "99+" : unreadCount}
-                </span>
-              ) : null}
             </h1>
             {user?.email ? (
               <p className="mt-1 text-sm text-muted-foreground">Signed in as {user.email}</p>
@@ -2128,18 +2722,19 @@ function DashboardShell() {
           <section className="rounded-xl border border-border/70 bg-card shadow-none p-5">
             {tab === "inbox" ? (
               <>
-                <header className="flex items-center gap-3 border-b border-border/60 pb-4">
-                  <div className="flex size-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                    <Inbox className="size-4.5" />
-                  </div>
-                  <h2 className="text-base font-bold tracking-tight">Messages</h2>
-                  {unreadCount > 0 ? (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-primary/15 px-2 py-0.5 font-mono text-[11px] font-semibold text-primary">
-                      {unreadCount} new
-                    </span>
-                  ) : null}
-                  <span className="ml-auto font-mono text-xs text-muted-foreground">latest 50 · live</span>
-                </header>
+                <InboxHeader
+                  total={messages?.length ?? 0}
+                  unreadCount={unreadCount}
+                  selectedCount={selectedIds.size}
+                  onSelectAll={() => setSelectedIds(new Set(messages!.map((m) => m._id)))}
+                  onClearSelection={() => setSelectedIds(new Set())}
+                  onDeleteSelected={handleDeleteSelected}
+                  onMarkRead={() => handleMarkSelected(true)}
+                  onMarkUnread={() => handleMarkSelected(false)}
+                  deleting={deletingSelected}
+                  marking={marking}
+                />
+                <ResendChecklist status={emailStatus} />
                 <div className="pt-2">
                   {messages === undefined ? (
                     <div className="flex items-center gap-2 py-6 text-sm text-muted-foreground">
@@ -2150,7 +2745,19 @@ function DashboardShell() {
                   ) : (
                     <ul className="divide-y divide-border/60">
                       {messages.map((msg) => (
-                        <MessageThread key={msg._id} msg={msg} />
+                        <MessageThread
+                          key={msg._id}
+                          msg={msg}
+                          selected={selectedIds.has(msg._id)}
+                          onToggleSelect={(next) =>
+                            setSelectedIds((prev) => {
+                              const copy = new Set(prev);
+                              if (next) copy.add(msg._id);
+                              else copy.delete(msg._id);
+                              return copy;
+                            })
+                          }
+                        />
                       ))}
                     </ul>
                   )}

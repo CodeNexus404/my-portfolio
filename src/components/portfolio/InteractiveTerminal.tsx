@@ -329,6 +329,13 @@ export default function InteractiveTerminal({ className }: { className?: string 
     const descKey = command in descMap ? command : canonical in descMap ? canonical : null;
     const desc = descKey ? descMap[descKey] : undefined;
 
+    // Owner-authored custom answer: when the dashboard has set a response for this
+    // command, show those exact lines instead of the built-in logic. This lets the
+    // owner fully rewrite any command's output while leaving un-set commands to
+    // their live, data-driven defaults.
+    const respMap = terminal.commandResponses ?? {};
+    const respKey = command in respMap ? command : canonical in respMap ? canonical : null;
+
     if (canonical === "clear") {
       setLines([]);
       setHistory((h) => [trimmed, ...h]);
@@ -908,6 +915,12 @@ export default function InteractiveTerminal({ className }: { className?: string 
         out = [
           { type: "error", text: `command not found: ${command} — try 'help'` },
         ];
+    }
+
+    // Owner-authored custom answer takes precedence over built-in logic: when the
+    // dashboard has set a response for this command, those exact lines are shown.
+    if (respKey && respMap[respKey]?.length) {
+      out = respMap[respKey].map((line): TerminalLine => ({ type: "output", text: line }));
     }
 
     // Prepend the dashboard-managed description (if any) as a highlighted line.

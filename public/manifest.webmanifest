@@ -1,7 +1,7 @@
 {
-  "name": "freebuff.com application",
-  "short_name": "freebuff.com",
-  "description": "freebuff.com application",
+  "name": "Sahil Shedge — Portfolio",
+  "short_name": "Portfolio",
+  "description": "Sahil Shedge — Full-Stack Developer portfolio",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",

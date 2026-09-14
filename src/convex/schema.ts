@@ -95,6 +95,13 @@ const schema = defineSchema(
           defaultCommands: v.array(v.string()),
           // Editable description/response shown when a chip/command is run.
           commandDescriptions: v.optional(v.record(v.string(), v.string())),
+          // Optional custom output lines per command. When a command has an entry
+          // here, the public terminal shows these lines instead of its built-in
+          // logic — so the owner can fully rewrite any command's answer. Commands
+          // without an entry keep their live, data-driven default output.
+          commandResponses: v.optional(
+            v.record(v.string(), v.array(v.string())),
+          ),
         }),
       ),
       // Global background shader (the site's animated backdrop). `mode` switches
@@ -157,11 +164,32 @@ const schema = defineSchema(
     }).index("by_order", ["order"]),
 
     // Skills & Stack — grouped chips that scroll in the marquee. Owner-editable.
+    // Each item is { name, icon? } where `icon` is an optional key into the
+    // brand library (skillBrands/extraIcons in skillBrands.ts). When absent,
+    // the public site falls back to name-based logo lookup.
     skills: defineTable({
       groups: v.array(
-        v.object({ label: v.string(), items: v.array(v.string()) }),
+        v.object({
+          label: v.string(),
+          items: v.array(
+            v.object({ name: v.string(), icon: v.optional(v.string()) }),
+          ),
+        }),
       ),
       note: v.string(),
+      // Optional intro line shown under the section header (above the marquee).
+      // When absent the public site falls back to the static default.
+      intro: v.optional(v.string()),
+      // Marquee layout: number of scroll rows, base loop duration (seconds),
+      // and whether odd rows scroll in reverse. Optional so older rows keep
+      // the default (2 rows, 70s, alternating).
+      marquee: v.optional(
+        v.object({
+          rows: v.number(),
+          baseSpeed: v.number(),
+          alternateDirection: v.boolean(),
+        }),
+      ),
     }),
 
     // add other tables here

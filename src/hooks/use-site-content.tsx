@@ -27,11 +27,22 @@ type SiteExperience = {
   technologies: string[];
 };
 
-type SiteSkillGroup = { label: string; items: string[] };
+type SiteSkillItem = { name: string; icon?: string };
+type SiteSkillGroup = { label: string; items: SiteSkillItem[] };
+
+type SiteMarqueeConfig = {
+  rows: number;
+  baseSpeed: number;
+  alternateDirection: boolean;
+};
 
 type SiteSkills = {
   groups: SiteSkillGroup[];
   note: string;
+  /** Optional intro subtitle (null = use the static default). */
+  intro: string | null;
+  /** Optional marquee layout (rows / speed / direction). null = use defaults. */
+  marquee: SiteMarqueeConfig | null;
 };
 
 type SiteTerminal = {
@@ -40,6 +51,8 @@ type SiteTerminal = {
   defaultCommands: string[];
   /** Editable description/response shown when a chip/command is run. */
   commandDescriptions?: Record<string, string>;
+  /** Optional custom output lines per command (command → lines[]). */
+  commandResponses?: Record<string, string[]>;
 };
 
 type SiteBackground = {
@@ -87,6 +100,7 @@ const EMPTY: SiteContent = {
     bootLines: [],
     defaultCommands: ["help", "whoami", "projects", "skills", "socials", "clear"],
     commandDescriptions: {},
+    commandResponses: {},
   },
   background: {
     mode: "shader",
@@ -118,7 +132,7 @@ const EMPTY: SiteContent = {
     description: e.description,
     technologies: e.technologies,
   })),
-  skills: { groups: staticSkills.groups, note: staticSkills.note },
+  skills: { groups: staticSkills.groups, note: staticSkills.note, intro: null, marquee: null },
   loading: false,
 };
 
@@ -212,7 +226,12 @@ function QueryBridge({ onData }: { onData: (next: SiteContent) => void }) {
       // Same guard for skills: keep the static groups until the owner edits them.
       skills:
         data.skills && data.skills.groups && data.skills.groups.length > 0
-          ? data.skills
+          ? {
+              groups: data.skills.groups,
+              note: data.skills.note,
+              intro: data.skills.intro ?? null,
+              marquee: data.skills.marquee ?? null,
+            }
           : EMPTY.skills,
       loading: false,
     });

@@ -28,10 +28,10 @@ All source lives under `src/`. Package manager: **npm**.
 - **Hero** — animated availability badge, rotating status text, responsive headline.
 - **Interactive Terminal** — a real in-page shell (`help`, `ls`, `open`, `projects`, `man`, history with ↑/↓, Tab completion, clickable links). Boots with a loading sequence.
 - **About** — statement with word-reveal, animated stat counters, education timeline.
-- **Skills & Stack** — marquee of technology chips with brand logos (Java, VS Code, etc.) sourced from Font Awesome / Simple Icons.
+- **Skills & Stack** — marquee of technology chips with brand logos (Java, VS Code, etc.) sourced from Font Awesome / Simple Icons, on a static black card background.
 - **Experience & Work** — timeline + project cards with WebGL wave-shader headers and LIVE / GITHUB links.
 - **Liquid-glass navbar** — frosted capsule with adaptive text color, scroll-progress bar, ⌘K-style hint.
-- **Contact** — connected info + form card with glass submit button and toast feedback.
+- **Contact** — connected info + form card with glass submit button and toast feedback. Submissions land in the backend and can be replied to by email.
 - **Smooth scrolling** — Lenis-driven, tuned for high-refresh displays.
 
 ---
@@ -111,6 +111,7 @@ With `VITE_CONVEX_URL` present, the app talks to your real deployment instead of
 | `VITE_CONVEX_URL`   | Client  | When **set**, the app uses the real Convex backend; when **unset**, it falls back to the offline shim. |
 | `JWKS` / `JWT_PRIVATE_KEY` / `SITE_URL` | Convex Auth | Auth signing keys for the backend. |
 | `OWNER_EMAIL`      | Backend | Email allowed to access the owner workspace at `/dashboard`. Set this to **your** email or the workspace stays locked to the original owner. |
+| `RESEND_API_KEY` / `RESEND_FROM` | Convex (email) | Optional. Powers email-OTP sign-in **and** reply emails via your own Resend account. Without it, sign-in codes can't be emailed. Verify a domain in Resend and set `RESEND_FROM` to a sender on it for reliable delivery (falls back to Resend's `onboarding@resend.dev` test sender). |
 
 There is no `.env.local` committed; for local preview you only need `VITE_CONVEX_URL`.
 
@@ -118,7 +119,7 @@ There is no `.env.local` committed; for local preview you only need `VITE_CONVEX
 
 ## Authentication
 
-- Built on **Convex Auth** with **email OTP** + **anonymous** users.
+- Built on **Convex Auth** with **email OTP** + **anonymous** users. OTPs are emailed through your own **Resend** account when `RESEND_API_KEY` is set (falls back to Resend's test sender `onboarding@resend.dev`).
 - Frontend: use the `useAuth` hook — never read auth state manually.
 
 ```ts
