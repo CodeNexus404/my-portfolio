@@ -1,44 +1,31 @@
 import { v } from "convex/values";
-import { internalMutation, internalQuery, mutation, query } from "./_generated/server";
+import { internal } from "./_generated/api";
 import {
-  getCurrentUser,
-  isOwner,
-  requireOwner,
-  ownerEmail,
-} from "./guards";
+  internalMutation,
+  internalQuery,
+  mutation,
+  query,
+} from "./_generated/server";
+import { getCurrentUser, isOwner, requireOwner, ownerEmail } from "./guards";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /**
- * Contact inbox helpers. Owner authorization is centralized in ./guards.ts
- * (OWNER_EMAIL env var with the portfolio-email fallback). The email check in
- * sendReply.ts compares against the same owner email via guards.ownerEmail().
- *
- * Store a contact-form submission. Public on purpose — visitors send this
- * without an account. Inputs are trimmed and length-capped server-side.
+ * Internal insert used by the sendMessage action — a plain mutation cannot
+ * run process.env (fetch/Node) so the storage half lives here, callable from
+ * the action via ctx.runMutation.
  */
-export const sendMessage = mutation({
+export const insertMessageInternal = internalMutation({
   args: {
     name: v.string(),
     email: v.string(),
     message: v.string(),
   },
   handler: async (ctx, args) => {
-    const name = args.name.trim().slice(0, 120);
-    const email = args.email.trim().slice(0, 200);
-    const message = args.message.trim().slice(0, 4000);
-
-    if (!name || !email || !message) {
-      throw new Error("Please fill in all fields.");
-    }
-    if (!EMAIL_RE.test(email)) {
-      throw new Error("Please enter a valid email address.");
-    }
-
     return await ctx.db.insert("contactMessages", {
-      name,
-      email,
-      message,
+      name: args.name,
+      email: args.email,
+      message: args.message,
       read: false,
     });
   },

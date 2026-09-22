@@ -14,6 +14,7 @@ import type * as content from "../content.js";
 import type * as guards from "../guards.js";
 import type * as http from "../http.js";
 import type * as messages from "../messages.js";
+import type * as sendMessage from "../sendMessage.js";
 import type * as sendReply from "../sendReply.js";
 import type * as users from "../users.js";
 
@@ -30,6 +31,7 @@ declare const fullApi: ApiFromModules<{
   guards: typeof guards;
   http: typeof http;
   messages: typeof messages;
+  sendMessage: typeof sendMessage;
   sendReply: typeof sendReply;
   users: typeof users;
 }>;

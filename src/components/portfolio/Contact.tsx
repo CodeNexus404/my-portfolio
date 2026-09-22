@@ -15,7 +15,7 @@ export default function Contact() {
   const [message, setMessage] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [sending, setSending] = useState(false);
-  const sendMessage = useMutation(api.messages.sendMessage);
+  const sendMessage = useMutation(api.sendMessage.sendMessage);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

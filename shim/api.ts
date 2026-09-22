@@ -22,7 +22,9 @@ export const api = {
   messages: {
     listMessages: node("messages:listMessages"),
     markAsRead: node("messages:markAsRead"),
-    sendMessage: node("messages:sendMessage"),
+  },
+  sendMessage: {
+    sendMessage: node("sendMessage:sendMessage"),
   },
   sendReply: {
     replyToMessage: node("sendReply:replyToMessage"),

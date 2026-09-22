@@ -7,18 +7,36 @@
   "siteContent": {
     "hero": {
       "constant": "Stay",
-      "rotating": ["Consistent", "Curious", "Shipping", "Building", "Learning"]
+      "rotating": [
+        "Consistent",
+        "Curious",
+        "Shipping",
+        "Building",
+        "Learning"
+      ]
     },
     "availability": "Open to internships & full-time roles",
     "about": [
-      "I'm a final-year Computer Science undergrad and full-stack developer who enjoys turning rough ideas into real, shipped products — AI-powered automation tools, realtime systems and computer-vision apps."
+      "I'm a final year Computer Science undergraduate and full stack developer focused on building practical software that solves real world problems. I turn ideas into real, shipped products by combining full stack development, AI, automation, and computer vision. From scalable web applications to real time intelligent systems, I enjoy building products that are useful, reliable, and easy to use."
     ],
-    "objective": "Final-year Computer Science student focused on full-stack development and applied AI. I've built working tools with Python, LLMs, REST APIs and workflow automation — from multi-platform content systems to realtime computer-vision pipelines. Now looking for an AI & Automation internship where I can ship intelligent, useful software with a team that moves fast.",
+    "objective": "I am seeking a Software Developer role where I can apply my skills in full stack development, AI, automation, and computer vision to build practical and impactful software. I enjoy solving real world problems, learning new technologies, and turning ideas into reliable products while growing as a software engineer.",
     "socials": [
-      { "label": "GitHub", "href": "https://github.com/CodeNexus404" },
-      { "label": "LinkedIn", "href": "https://www.linkedin.com/in/sahil-shedge-a99401292/" },
-      { "label": "X / Twitter", "href": "https://x.com/sahilshedge05" },
-      { "label": "Email", "href": "mailto:shedgesahil2005@gmail.com" }
+      {
+        "label": "GitHub",
+        "href": "https://github.com/CodeNexus404"
+      },
+      {
+        "label": "LinkedIn",
+        "href": "https://www.linkedin.com/in/sahil-shedge-a99401292/"
+      },
+      {
+        "label": "X / Twitter",
+        "href": "https://x.com/sahilshedge05"
+      },
+      {
+        "label": "Email",
+        "href": "mailto:shedgesahil2005@gmail.com"
+      }
     ],
     "resumeUrl": "/resume.pdf"
   },
@@ -27,7 +45,12 @@
       "_id": "socialflow",
       "name": "SocialFlow",
       "description": "AI-powered multi-platform content automation for creators — publish, schedule and analyze YouTube & Instagram content with AI-generated metadata, real-time analytics and n8n workflow automation.",
-      "technologies": ["React.js", "Prisma", "n8n automation", "Google APIs"],
+      "technologies": [
+        "React.js",
+        "Prisma",
+        "n8n automation",
+        "Google APIs"
+      ],
       "liveUrl": "",
       "githubUrl": "https://github.com/CodeNexus404/SocialFlow",
       "order": 1
@@ -36,7 +59,12 @@
       "_id": "nexference",
       "name": "Nexference",
       "description": "AI coding gateway switcher — browse live free models across 14 AI gateways and apply the right Anthropic / OpenAI / Gemini config to Claude Code or any client in one click.",
-      "technologies": ["JavaScript", "Node.js", "LLMs", "Claude Code"],
+      "technologies": [
+        "JavaScript",
+        "Node.js",
+        "LLMs",
+        "Claude Code"
+      ],
       "liveUrl": "",
       "githubUrl": "https://github.com/CodeNexus404/Nexference",
       "order": 2
@@ -45,7 +73,12 @@
       "_id": "driver-safety-ai",
       "name": "Driver Safety AI",
       "description": "Real-time computer-vision system that detects risky driving behaviors — phone usage, missing seatbelts, helmet violations — with YOLOv8 + OpenCV, providing live alerts and automated logging.",
-      "technologies": ["Python", "YOLOv8", "OpenCV", "Computer Vision"],
+      "technologies": [
+        "Python",
+        "YOLOv8",
+        "OpenCV",
+        "Computer Vision"
+      ],
       "liveUrl": "",
       "githubUrl": "https://github.com/CodeNexus404/driver-safety-ai",
       "order": 3
@@ -54,7 +87,11 @@
       "_id": "poshara",
       "name": "Poshara",
       "description": "A platform connecting restaurants, NGOs and volunteers for surplus food distribution, using OCR & ML-based freshness assessment to route safe food to where it's needed.",
-      "technologies": ["OCR", "Machine Learning", "Web App"],
+      "technologies": [
+        "OCR",
+        "Machine Learning",
+        "Web App"
+      ],
       "liveUrl": "https://poshara.netlify.app/",
       "githubUrl": "https://github.com/CodeNexus404/Poshara",
       "order": 4

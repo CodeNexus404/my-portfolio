@@ -198,7 +198,7 @@ function runMutation(name: string, args: Record<string, unknown>): unknown {
       }
       return null;
     }
-    case "messages:sendMessage": {
+    case "sendMessage:sendMessage": {
       const newMsg: Message = {
         _id: `msg_${Date.now()}`,
         _creationTime: Date.now(),

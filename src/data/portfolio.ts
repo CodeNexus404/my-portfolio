@@ -23,11 +23,11 @@ export const profile = {
   },
   quote: "Stay GOATED 🐐",
   about: [
-    "I'm a final-year Computer Science undergrad and full-stack developer who enjoys turning rough ideas into real, shipped products — AI-powered automation tools, realtime systems and computer-vision apps.",
+    "I'm a final year Computer Science undergraduate and full stack developer focused on building practical software that solves real world problems. I turn ideas into real, shipped products by combining full stack development, AI, automation, and computer vision. From scalable web applications to real time intelligent systems, I enjoy building products that are useful, reliable, and easy to use.",
   ],
   /** Résumé OBJECTIVE — shown in the About section. */
   objective:
-    "Final-year Computer Science student focused on full-stack development and applied AI. I've built working tools with Python, LLMs, REST APIs and workflow automation — from multi-platform content systems to realtime computer-vision pipelines. Now looking for an AI & Automation internship where I can ship intelligent, useful software with a team that moves fast.",
+    "I am seeking a Software Developer role where I can apply my skills in full stack development, AI, automation, and computer vision to build practical and impactful software. I enjoy solving real world problems, learning new technologies, and turning ideas into reliable products while growing as a software engineer.",
   education: {
     degree: "B.Tech — Computer Science & Engineering",
     detail: "2022 — 2026",

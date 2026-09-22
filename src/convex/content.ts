@@ -346,16 +346,16 @@ export const upsertProject = mutation({
     // Clamp numeric shader params to safe ranges. Null → defaults at render time.
     const shaderParams = args.shaderParams
       ? {
-          softness: clampNum(args.shaderParams.softness, 0, 1, 0.5),
-          intensity: clampNum(args.shaderParams.intensity, 0, 1, 0.25),
-          noise: clampNum(args.shaderParams.noise, 0, 1, 0),
-          speed: clampNum(args.shaderParams.speed, 0, 4, 0.5),
-          scale: clampNum(args.shaderParams.scale, 0.01, 4, 1.5),
-          rotation: clampNum(args.shaderParams.rotation, 0, 360, 0),
-          offsetX: clampNum(args.shaderParams.offsetX, -1, 1, 0),
-          offsetY: clampNum(args.shaderParams.offsetY, -1, 1, 0),
-          shape: args.shaderParams.shape,
-        }
+        softness: clampNum(args.shaderParams.softness, 0, 1, 0.5),
+        intensity: clampNum(args.shaderParams.intensity, 0, 1, 0.25),
+        noise: clampNum(args.shaderParams.noise, 0, 1, 0),
+        speed: clampNum(args.shaderParams.speed, 0, 4, 0.5),
+        scale: clampNum(args.shaderParams.scale, 0.01, 4, 1.5),
+        rotation: clampNum(args.shaderParams.rotation, 0, 360, 0),
+        offsetX: clampNum(args.shaderParams.offsetX, -1, 1, 0),
+        offsetY: clampNum(args.shaderParams.offsetY, -1, 1, 0),
+        shape: args.shaderParams.shape,
+      }
       : undefined;
     if (!name) throw new Error("Project name can't be empty.");
 
@@ -577,13 +577,13 @@ export const updateSkills = mutation({
     // alternate-direction flag. Only stored when the owner actually sets it.
     const marquee = args.marquee
       ? {
-          rows: Math.min(6, Math.max(1, Math.round(args.marquee.rows || 2))),
-          baseSpeed: Math.min(
-            240,
-            Math.max(10, Math.round(args.marquee.baseSpeed || 70)),
-          ),
-          alternateDirection: args.marquee.alternateDirection !== false,
-        }
+        rows: Math.min(6, Math.max(1, Math.round(args.marquee.rows || 2))),
+        baseSpeed: Math.min(
+          240,
+          Math.max(10, Math.round(args.marquee.baseSpeed || 70)),
+        ),
+        alternateDirection: args.marquee.alternateDirection !== false,
+      }
       : undefined;
 
     const existing = await ctx.db.query("skills").first();
@@ -680,10 +680,11 @@ export const seedDefaults = mutation({
       },
       availability: "Open to internships & full-time roles",
       about: [
-        "I'm a final-year Computer Science undergrad and full-stack developer who enjoys turning rough ideas into real, shipped products — AI-powered automation tools, realtime systems and computer-vision apps.",
+        "I'm a final year Computer Science undergraduate and full stack developer focused on building practical software that solves real world problems. I turn ideas into real, shipped products by combining full stack development, AI, automation, and computer vision. From scalable web applications to real time intelligent systems, I enjoy building products that are useful, reliable, and easy to use."
       ],
       objective:
-        "Final-year Computer Science student focused on full-stack development and applied AI. I've built working tools with Python, LLMs, REST APIs and workflow automation — from multi-platform content systems to realtime computer-vision pipelines. Now looking for an AI & Automation internship where I can ship intelligent, useful software with a team that moves fast.",
+        "I am seeking a Software Developer role where I can apply my skills in full stack development, AI, automation, and computer vision to build practical and impactful software. I enjoy solving real world problems, learning new technologies, and turning ideas into reliable products while growing as a software engineer.",
+
       socials: [
         { label: "GitHub", href: "https://github.com/CodeNexus404" },
         {
